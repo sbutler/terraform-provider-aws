@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -170,6 +171,13 @@ func resourcePortfolioShareCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
+	// Only one share create/second is allowed, but unfortunately not all throttling
+	// happens as a return from CreatePortfolioShare(). That can succeed and then
+	// the throttling can happen as part of the account accepting. If everything
+	// else succeeds, sleep a bit to give us time between sequentially executed
+	// portfolio shares.
+	time.Sleep(15 * time.Second)
+
 	return resourcePortfolioShareRead(d, meta)
 }
 
@@ -189,7 +197,7 @@ func resourcePortfolioShareRead(d *schema.ResourceData, meta interface{}) error 
 
 	output, err := WaitPortfolioShareReady(conn, portfolioID, shareType, principalID, waitForAcceptance, d.Timeout(schema.TimeoutRead))
 
-	if !d.IsNewResource() && tfawserr.ErrCodeEquals(err, servicecatalog.ErrCodeResourceNotFoundException) {
+	if !d.IsNewResource() && (tfawserr.ErrCodeEquals(err, servicecatalog.ErrCodeResourceNotFoundException) || tfresource.NotFound(err)) {
 		log.Printf("[WARN] Service Catalog Portfolio Share (%s) not found, removing from state", d.Id())
 		d.SetId("")
 		return nil
