@@ -95,7 +95,7 @@ func resourceEIPAssociationCreate(d *schema.ResourceData, meta interface{}) erro
 	log.Printf("[DEBUG] EIP association configuration: %#v", request)
 
 	var resp *ec2.AssociateAddressOutput
-	err := resource.Retry(PropagationTimeout, func() *resource.RetryError {
+	err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 		var err error
 		resp, err = conn.AssociateAddress(request)
 
@@ -142,7 +142,7 @@ func resourceEIPAssociationCreate(d *schema.ResourceData, meta interface{}) erro
 		// EC2-Classic
 		d.SetId(aws.StringValue(request.PublicIp))
 
-		if err := waitForEc2AddressAssociationClassic(conn, aws.StringValue(request.PublicIp), aws.StringValue(request.InstanceId)); err != nil {
+		if err := waitForAddressAssociationClassic(conn, aws.StringValue(request.PublicIp), aws.StringValue(request.InstanceId)); err != nil {
 			return fmt.Errorf("error waiting for EC2 Address (%s) to associate with EC2-Classic Instance (%s): %w", aws.StringValue(request.PublicIp), aws.StringValue(request.InstanceId), err)
 		}
 	}
@@ -159,7 +159,7 @@ func resourceEIPAssociationRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	var response *ec2.DescribeAddressesOutput
-	err = resource.Retry(PropagationTimeout, func() *resource.RetryError {
+	err = resource.Retry(propagationTimeout, func() *resource.RetryError {
 		var err error
 		response, err = conn.DescribeAddresses(request)
 

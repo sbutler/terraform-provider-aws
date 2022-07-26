@@ -50,6 +50,29 @@ func ResourceOrganizationConfiguration() *schema.Resource {
 								},
 							},
 						},
+						"kubernetes": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Computed: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"audit_logs": {
+										Type:     schema.TypeList,
+										Required: true,
+										MaxItems: 1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"enable": {
+													Type:     schema.TypeBool,
+													Required: true,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -75,7 +98,7 @@ func resourceOrganizationConfigurationUpdate(d *schema.ResourceData, meta interf
 	}
 
 	if v, ok := d.GetOk("datasources"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		input.DataSources = expandGuardDutyOrganizationDataSourceConfigurations(v.([]interface{})[0].(map[string]interface{}))
+		input.DataSources = expandOrganizationDataSourceConfigurations(v.([]interface{})[0].(map[string]interface{}))
 	}
 
 	_, err := conn.UpdateOrganizationConfiguration(input)
@@ -115,7 +138,7 @@ func resourceOrganizationConfigurationRead(d *schema.ResourceData, meta interfac
 	d.Set("auto_enable", output.AutoEnable)
 
 	if output.DataSources != nil {
-		if err := d.Set("datasources", []interface{}{flattenGuardDutyOrganizationDataSourceConfigurationsResult(output.DataSources)}); err != nil {
+		if err := d.Set("datasources", []interface{}{flattenOrganizationDataSourceConfigurationsResult(output.DataSources)}); err != nil {
 			return fmt.Errorf("error setting datasources: %w", err)
 		}
 	} else {
@@ -127,7 +150,7 @@ func resourceOrganizationConfigurationRead(d *schema.ResourceData, meta interfac
 	return nil
 }
 
-func expandGuardDutyOrganizationDataSourceConfigurations(tfMap map[string]interface{}) *guardduty.OrganizationDataSourceConfigurations {
+func expandOrganizationDataSourceConfigurations(tfMap map[string]interface{}) *guardduty.OrganizationDataSourceConfigurations {
 	if tfMap == nil {
 		return nil
 	}
@@ -135,13 +158,17 @@ func expandGuardDutyOrganizationDataSourceConfigurations(tfMap map[string]interf
 	apiObject := &guardduty.OrganizationDataSourceConfigurations{}
 
 	if v, ok := tfMap["s3_logs"].([]interface{}); ok && len(v) > 0 {
-		apiObject.S3Logs = expandGuardDutyOrganizationS3LogsConfiguration(v[0].(map[string]interface{}))
+		apiObject.S3Logs = expandOrganizationS3LogsConfiguration(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["kubernetes"].([]interface{}); ok && len(v) > 0 {
+		apiObject.Kubernetes = expandOrganizationKubernetesConfiguration(v[0].(map[string]interface{}))
 	}
 
 	return apiObject
 }
 
-func expandGuardDutyOrganizationS3LogsConfiguration(tfMap map[string]interface{}) *guardduty.OrganizationS3LogsConfiguration {
+func expandOrganizationS3LogsConfiguration(tfMap map[string]interface{}) *guardduty.OrganizationS3LogsConfiguration {
 	if tfMap == nil {
 		return nil
 	}
@@ -155,7 +182,41 @@ func expandGuardDutyOrganizationS3LogsConfiguration(tfMap map[string]interface{}
 	return apiObject
 }
 
-func flattenGuardDutyOrganizationDataSourceConfigurationsResult(apiObject *guardduty.OrganizationDataSourceConfigurationsResult) map[string]interface{} {
+func expandOrganizationKubernetesConfiguration(tfMap map[string]interface{}) *guardduty.OrganizationKubernetesConfiguration {
+	if tfMap == nil {
+		return nil
+	}
+
+	l, ok := tfMap["audit_logs"].([]interface{})
+	if !ok || len(l) == 0 {
+		return nil
+	}
+
+	m, ok := l[0].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	return &guardduty.OrganizationKubernetesConfiguration{
+		AuditLogs: expandOrganizationKubernetesAuditLogsConfiguration(m),
+	}
+}
+
+func expandOrganizationKubernetesAuditLogsConfiguration(tfMap map[string]interface{}) *guardduty.OrganizationKubernetesAuditLogsConfiguration {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &guardduty.OrganizationKubernetesAuditLogsConfiguration{}
+
+	if v, ok := tfMap["enable"].(bool); ok {
+		apiObject.AutoEnable = aws.Bool(v)
+	}
+
+	return apiObject
+}
+
+func flattenOrganizationDataSourceConfigurationsResult(apiObject *guardduty.OrganizationDataSourceConfigurationsResult) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -163,13 +224,15 @@ func flattenGuardDutyOrganizationDataSourceConfigurationsResult(apiObject *guard
 	tfMap := map[string]interface{}{}
 
 	if v := apiObject.S3Logs; v != nil {
-		tfMap["s3_logs"] = []interface{}{flattenGuardDutyOrganizationS3LogsConfigurationResult(v)}
+		tfMap["s3_logs"] = []interface{}{flattenOrganizationS3LogsConfigurationResult(v)}
 	}
-
+	if v := apiObject.Kubernetes; v != nil {
+		tfMap["kubernetes"] = []interface{}{flattenOrganizationKubernetesConfigurationResult(v)}
+	}
 	return tfMap
 }
 
-func flattenGuardDutyOrganizationS3LogsConfigurationResult(apiObject *guardduty.OrganizationS3LogsConfigurationResult) map[string]interface{} {
+func flattenOrganizationS3LogsConfigurationResult(apiObject *guardduty.OrganizationS3LogsConfigurationResult) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -178,6 +241,34 @@ func flattenGuardDutyOrganizationS3LogsConfigurationResult(apiObject *guardduty.
 
 	if v := apiObject.AutoEnable; v != nil {
 		tfMap["auto_enable"] = aws.BoolValue(v)
+	}
+
+	return tfMap
+}
+
+func flattenOrganizationKubernetesConfigurationResult(apiObject *guardduty.OrganizationKubernetesConfigurationResult) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.AuditLogs; v != nil {
+		tfMap["audit_logs"] = []interface{}{flattenOrganizationKubernetesAuditLogsConfiguration(v)}
+	}
+
+	return tfMap
+}
+
+func flattenOrganizationKubernetesAuditLogsConfiguration(apiObject *guardduty.OrganizationKubernetesAuditLogsConfigurationResult) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.AutoEnable; v != nil {
+		tfMap["enable"] = aws.BoolValue(v)
 	}
 
 	return tfMap

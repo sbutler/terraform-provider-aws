@@ -15,12 +15,12 @@ import (
 func TestAccVPCSecurityGroupDataSource_basic(t *testing.T) {
 	rInt := sdkacctest.RandInt()
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:   func() { acctest.PreCheck(t) },
-		ErrorCheck: acctest.ErrorCheck(t, ec2.EndpointsID),
-		Providers:  acctest.Providers,
+		PreCheck:          func() { acctest.PreCheck(t) },
+		ErrorCheck:        acctest.ErrorCheck(t, ec2.EndpointsID),
+		ProviderFactories: acctest.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSecurityGroupDataSourceConfig(rInt),
+				Config: testAccVPCSecurityGroupDataSourceConfig_basic(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSecurityGroupCheckDataSource("data.aws_security_group.by_id"),
 					resource.TestCheckResourceAttr("data.aws_security_group.by_id", "description", "sg description"),
@@ -104,7 +104,7 @@ func testAccSecurityGroupCheckDefaultDataSource(name string) resource.TestCheckF
 	}
 }
 
-func testAccSecurityGroupDataSourceConfig(rInt int) string {
+func testAccVPCSecurityGroupDataSourceConfig_basic(rInt int) string {
 	return fmt.Sprintf(`
 resource "aws_vpc" "test" {
   cidr_block = "172.16.0.0/16"

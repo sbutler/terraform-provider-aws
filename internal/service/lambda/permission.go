@@ -15,12 +15,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/create"
-	tfiam "github.com/hashicorp/terraform-provider-aws/internal/service/iam"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 )
 
-var LambdaFunctionRegexp = `^(arn:[\w-]+:lambda:)?([a-z]{2}-(?:[a-z]+-){1,2}\d{1}:)?(\d{12}:)?(function:)?([a-zA-Z0-9-_]+)(:(\$LATEST|[a-zA-Z0-9-_]+))?$`
+var functionRegexp = `^(arn:[\w-]+:lambda:)?([a-z]{2}-(?:[a-z]+-){1,2}\d{1}:)?(\d{12}:)?(function:)?([a-zA-Z0-9-_]+)(:(\$LATEST|[a-zA-Z0-9-_]+))?$`
 
 func ResourcePermission() *schema.Resource {
 	return &schema.Resource{
@@ -150,7 +149,7 @@ func resourcePermissionCreate(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Adding Lambda Permission: %s", input)
 	// Retry for IAM and Lambda eventual consistency.
-	_, err := tfresource.RetryWhenAWSErrCodeEquals(tfiam.PropagationTimeout,
+	_, err := tfresource.RetryWhenAWSErrCodeEquals(propagationTimeout,
 		func() (interface{}, error) {
 			return conn.AddPermission(input)
 		},
@@ -169,7 +168,7 @@ func resourcePermissionRead(d *schema.ResourceData, meta interface{}) error {
 	conn := meta.(*conns.AWSClient).LambdaConn
 
 	functionName := d.Get("function_name").(string)
-	outputRaw, err := tfresource.RetryWhenNewResourceNotFound(PropagationTimeout,
+	outputRaw, err := tfresource.RetryWhenNewResourceNotFound(propagationTimeout,
 		func() (interface{}, error) {
 			return FindPolicyStatementByTwoPartKey(conn, functionName, d.Id(), d.Get("qualifier").(string))
 		}, d.IsNewResource())
@@ -264,7 +263,7 @@ func resourcePermissionDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("removing Lambda Permission (%s/%s): %w", functionName, d.Id(), err)
 	}
 
-	_, err = tfresource.RetryUntilNotFound(PropagationTimeout, func() (interface{}, error) {
+	_, err = tfresource.RetryUntilNotFound(propagationTimeout, func() (interface{}, error) {
 		return FindPolicyStatementByTwoPartKey(conn, functionName, d.Id(), d.Get("qualifier").(string))
 	})
 
@@ -348,7 +347,7 @@ func FindPolicyStatementByID(policy *Policy, id string) (*PolicyStatement, error
 }
 
 func GetQualifierFromAliasOrVersionARN(arn string) (string, error) {
-	matches := regexp.MustCompile(LambdaFunctionRegexp).FindStringSubmatch(arn)
+	matches := regexp.MustCompile(functionRegexp).FindStringSubmatch(arn)
 	if len(matches) < 8 || matches[7] == "" {
 		return "", fmt.Errorf("Invalid ARN or otherwise unable to get qualifier from ARN (%q)",
 			arn)
@@ -358,7 +357,7 @@ func GetQualifierFromAliasOrVersionARN(arn string) (string, error) {
 }
 
 func GetFunctionNameFromARN(arn string) (string, error) {
-	matches := regexp.MustCompile(LambdaFunctionRegexp).FindStringSubmatch(arn)
+	matches := regexp.MustCompile(functionRegexp).FindStringSubmatch(arn)
 	if len(matches) < 6 || matches[5] == "" {
 		return "", fmt.Errorf("Invalid ARN or otherwise unable to get qualifier from ARN (%q)",
 			arn)

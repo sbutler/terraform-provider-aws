@@ -1,5 +1,7 @@
 package rds
 
+import "time"
+
 const (
 	ClusterRoleStatusActive  = "ACTIVE"
 	ClusterRoleStatusDeleted = "DELETED"
@@ -7,16 +9,16 @@ const (
 )
 
 const (
-	StorageTypeStandard = "standard"
-	StorageTypeGp2      = "gp2"
-	StorageTypeIo1      = "io1"
+	storageTypeStandard = "standard"
+	storageTypeGP2      = "gp2"
+	storageTypeIO1      = "io1"
 )
 
 func StorageType_Values() []string {
 	return []string{
-		StorageTypeStandard,
-		StorageTypeGp2,
-		StorageTypeIo1,
+		storageTypeStandard,
+		storageTypeGP2,
+		storageTypeIO1,
 	}
 }
 
@@ -149,3 +151,7 @@ func TimeoutAction_Values() []string {
 		TimeoutActionRollbackCapacityChange,
 	}
 }
+
+const (
+	propagationTimeout = 2 * time.Minute
+)

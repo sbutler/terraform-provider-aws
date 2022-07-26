@@ -16,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
-	tfiam "github.com/hashicorp/terraform-provider-aws/internal/service/iam"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
@@ -601,10 +600,7 @@ func resourceUserPoolCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if v, ok := d.GetOk("account_recovery_setting"); ok {
-		configs := v.([]interface{})
-		config, ok := configs[0].(map[string]interface{})
-
-		if ok && config != nil {
+		if config, ok := v.([]interface{})[0].(map[string]interface{}); ok {
 			params.AccountRecoverySetting = expandUserPoolAccountRecoverySettingConfig(config)
 		}
 	}
@@ -731,7 +727,7 @@ func resourceUserPoolCreate(d *schema.ResourceData, meta interface{}) error {
 	// IAM roles & policies can take some time to propagate and be attached
 	// to the User Pool
 	var resp *cognitoidentityprovider.CreateUserPoolOutput
-	err := resource.Retry(tfiam.PropagationTimeout, func() *resource.RetryError {
+	err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 		var err error
 		resp, err = conn.CreateUserPool(params)
 		if tfawserr.ErrMessageContains(err, cognitoidentityprovider.ErrCodeInvalidSmsRoleTrustRelationshipException, "Role does not have a trust relationship allowing Cognito to assume the role") {
@@ -774,7 +770,7 @@ func resourceUserPoolCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		// IAM Roles and Policies can take some time to propagate
-		err := resource.Retry(tfiam.PropagationTimeout, func() *resource.RetryError {
+		err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 			_, err := conn.SetUserPoolMfaConfig(input)
 
 			if tfawserr.ErrMessageContains(err, cognitoidentityprovider.ErrCodeInvalidSmsRoleTrustRelationshipException, "Role does not have a trust relationship allowing Cognito to assume the role") {
@@ -977,7 +973,7 @@ func resourceUserPoolUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		// IAM Roles and Policies can take some time to propagate
-		err := resource.Retry(tfiam.PropagationTimeout, func() *resource.RetryError {
+		err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 			_, err := conn.SetUserPoolMfaConfig(input)
 
 			if tfawserr.ErrMessageContains(err, cognitoidentityprovider.ErrCodeInvalidSmsRoleTrustRelationshipException, "Role does not have a trust relationship allowing Cognito to assume the role") {
@@ -1044,10 +1040,7 @@ func resourceUserPoolUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if v, ok := d.GetOk("account_recovery_setting"); ok {
-			configs := v.([]interface{})
-			config, ok := configs[0].(map[string]interface{})
-
-			if ok && config != nil {
+			if config, ok := v.([]interface{})[0].(map[string]interface{}); ok {
 				params.AccountRecoverySetting = expandUserPoolAccountRecoverySettingConfig(config)
 			}
 		}
@@ -1150,7 +1143,7 @@ func resourceUserPoolUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		// IAM roles & policies can take some time to propagate and be attached
 		// to the User Pool.
-		err := resource.Retry(tfiam.PropagationTimeout, func() *resource.RetryError {
+		err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 			_, err := conn.UpdateUserPool(params)
 			if tfawserr.ErrMessageContains(err, cognitoidentityprovider.ErrCodeInvalidSmsRoleTrustRelationshipException, "Role does not have a trust relationship allowing Cognito to assume the role") {
 				log.Printf("[DEBUG] Received %s, retrying UpdateUserPool", err)
@@ -1288,6 +1281,10 @@ func flattenSoftwareTokenMFAConfiguration(apiObject *cognitoidentityprovider.Sof
 }
 
 func expandUserPoolAccountRecoverySettingConfig(config map[string]interface{}) *cognitoidentityprovider.AccountRecoverySettingType {
+	if len(config) == 0 {
+		return nil
+	}
+
 	configs := &cognitoidentityprovider.AccountRecoverySettingType{}
 
 	mechs := make([]*cognitoidentityprovider.RecoveryOptionType, 0)
@@ -1317,7 +1314,7 @@ func expandUserPoolAccountRecoverySettingConfig(config map[string]interface{}) *
 }
 
 func flattenUserPoolAccountRecoverySettingConfig(config *cognitoidentityprovider.AccountRecoverySettingType) []interface{} {
-	if config == nil {
+	if config == nil || len(config.RecoveryMechanisms) == 0 {
 		return nil
 	}
 

@@ -92,7 +92,7 @@ func resourceTransitGatewayRouteRead(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	outputRaw, err := tfresource.RetryWhenNewResourceNotFound(PropagationTimeout, func() (interface{}, error) {
+	outputRaw, err := tfresource.RetryWhenNewResourceNotFound(propagationTimeout, func() (interface{}, error) {
 		return FindTransitGatewayRoute(conn, transitGatewayRouteTableID, destination)
 	}, d.IsNewResource())
 
@@ -136,7 +136,7 @@ func resourceTransitGatewayRouteDelete(d *schema.ResourceData, meta interface{})
 		TransitGatewayRouteTableId: aws.String(transitGatewayRouteTableID),
 	})
 
-	if tfawserr.ErrCodeEquals(err, ErrCodeInvalidRouteNotFound, ErrCodeInvalidRouteTableIDNotFound) {
+	if tfawserr.ErrCodeEquals(err, errCodeInvalidRouteNotFound, errCodeInvalidRouteTableIDNotFound) {
 		return nil
 	}
 

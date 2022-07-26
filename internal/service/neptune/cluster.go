@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
-	tfiam "github.com/hashicorp/terraform-provider-aws/internal/service/iam"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
@@ -26,7 +25,7 @@ const (
 	// A constant for the supported CloudwatchLogsExports types
 	// is not currently available in the AWS sdk-for-go
 	// https://docs.aws.amazon.com/sdk-for-go/api/service/neptune/#pkg-constants
-	CloudwatchLogsExportsAudit = "audit"
+	cloudWatchLogsExportsAudit = "audit"
 
 	DefaultPort = 8182
 )
@@ -47,6 +46,14 @@ func ResourceCluster() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+
+			// allow_major_version_upgrade is used to indicate whether upgrades between different major versions
+			// are allowed.
+			"allow_major_version_upgrade": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Computed: true,
+			},
 
 			// apply_immediately is used to determine when the update modifications
 			// take place.
@@ -123,7 +130,7 @@ func ResourceCluster() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{
-						CloudwatchLogsExportsAudit,
+						cloudWatchLogsExportsAudit,
 					}, false),
 				},
 				Set: schema.HashString,
@@ -388,7 +395,7 @@ func resourceClusterCreate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Neptune Cluster create options: %s", createDbClusterInput)
 	}
 
-	err := resource.Retry(tfiam.PropagationTimeout, func() *resource.RetryError {
+	err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 		var err error
 		if restoreDBClusterFromSnapshot {
 			_, err = conn.RestoreDBClusterFromSnapshot(restoreDBClusterFromSnapshotInput)
@@ -561,8 +568,9 @@ func resourceClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	requestUpdate := false
 
 	req := &neptune.ModifyDBClusterInput{
-		ApplyImmediately:    aws.Bool(d.Get("apply_immediately").(bool)),
-		DBClusterIdentifier: aws.String(d.Id()),
+		AllowMajorVersionUpgrade: aws.Bool(d.Get("allow_major_version_upgrade").(bool)),
+		ApplyImmediately:         aws.Bool(d.Get("apply_immediately").(bool)),
+		DBClusterIdentifier:      aws.String(d.Id()),
 	}
 
 	if d.HasChange("copy_tags_to_snapshot") {

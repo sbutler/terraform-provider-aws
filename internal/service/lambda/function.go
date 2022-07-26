@@ -27,7 +27,7 @@ import (
 	homedir "github.com/mitchellh/go-homedir"
 )
 
-const awsMutexLambdaKey = `aws_lambda_function`
+const keyMutex = `aws_lambda_function`
 
 const FunctionVersionLatest = "$LATEST"
 
@@ -356,10 +356,8 @@ func ResourceFunction() *schema.Resource {
 }
 
 const (
-	PropagationTimeout = 5 * time.Minute
-
-	lambdaFunctionPutConcurrencyTimeout  = 1 * time.Minute
-	lambdaFunctionExtraThrottlingTimeout = 9 * time.Minute
+	functionPutConcurrencyTimeout  = 1 * time.Minute
+	functionExtraThrottlingTimeout = 9 * time.Minute
 )
 
 func checkHandlerRuntimeForZipFunction(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
@@ -436,8 +434,8 @@ func resourceFunctionCreate(d *schema.ResourceData, meta interface{}) error {
 		// Grab an exclusive lock so that we're only reading one function into
 		// memory at a time.
 		// See https://github.com/hashicorp/terraform/issues/9364
-		conns.GlobalMutexKV.Lock(awsMutexLambdaKey)
-		defer conns.GlobalMutexKV.Unlock(awsMutexLambdaKey)
+		conns.GlobalMutexKV.Lock(keyMutex)
+		defer conns.GlobalMutexKV.Unlock(keyMutex)
 		file, err := loadFileContent(filename.(string))
 		if err != nil {
 			return fmt.Errorf("unable to load %q: %w", filename.(string), err)
@@ -562,7 +560,7 @@ func resourceFunctionCreate(d *schema.ResourceData, meta interface{}) error {
 		params.Tags = Tags(tags.IgnoreAWS())
 	}
 
-	err := resource.Retry(PropagationTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
+	err := resource.Retry(propagationTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
 		_, err := conn.CreateFunction(params)
 
 		if tfawserr.ErrMessageContains(err, lambda.ErrCodeInvalidParameterValueException, "The role defined for the function cannot be assumed by Lambda") {
@@ -606,7 +604,7 @@ func resourceFunctionCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error creating Lambda Function (1): %w", err)
 		}
 
-		err := resource.Retry(lambdaFunctionExtraThrottlingTimeout, func() *resource.RetryError {
+		err := resource.Retry(functionExtraThrottlingTimeout, func() *resource.RetryError {
 			_, err := conn.CreateFunction(params)
 
 			if tfawserr.ErrMessageContains(err, lambda.ErrCodeInvalidParameterValueException, "throttled by EC2") {
@@ -645,7 +643,7 @@ func resourceFunctionCreate(d *schema.ResourceData, meta interface{}) error {
 			ReservedConcurrentExecutions: aws.Int64(int64(reservedConcurrentExecutions)),
 		}
 
-		err := resource.Retry(lambdaFunctionPutConcurrencyTimeout, func() *resource.RetryError {
+		err := resource.Retry(functionPutConcurrencyTimeout, func() *resource.RetryError {
 			_, err := conn.PutFunctionConcurrency(concurrencyParams)
 
 			if tfawserr.ErrCodeEquals(err, lambda.ErrCodeResourceNotFoundException) {
@@ -885,7 +883,7 @@ func resourceFunctionRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("qualified_arn", lastQualifiedArn)
 	}
 
-	invokeArn := functionInvokeArn(*function.FunctionArn, meta)
+	invokeArn := functionInvokeARN(*function.FunctionArn, meta)
 	d.Set("invoke_arn", invokeArn)
 
 	// Currently, this functionality is only enabled in AWS Commercial partition
@@ -1125,7 +1123,7 @@ func resourceFunctionUpdate(d *schema.ResourceData, meta interface{}) error {
 	if configUpdate {
 		log.Printf("[DEBUG] Send Update Lambda Function Configuration request: %#v", configReq)
 
-		err := resource.Retry(PropagationTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
+		err := resource.Retry(propagationTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
 			_, err := conn.UpdateFunctionConfiguration(configReq)
 
 			if tfawserr.ErrMessageContains(err, lambda.ErrCodeInvalidParameterValueException, "The role defined for the function cannot be assumed by Lambda") {
@@ -1170,7 +1168,7 @@ func resourceFunctionUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			// Allow more time for EC2 throttling
-			err := resource.Retry(lambdaFunctionExtraThrottlingTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
+			err := resource.Retry(functionExtraThrottlingTimeout, func() *resource.RetryError { // nosem: helper-schema-resource-Retry-without-TimeoutError-check
 				_, err = conn.UpdateFunctionConfiguration(configReq)
 
 				if tfawserr.ErrMessageContains(err, lambda.ErrCodeInvalidParameterValueException, "throttled by EC2") {
@@ -1216,8 +1214,8 @@ func resourceFunctionUpdate(d *schema.ResourceData, meta interface{}) error {
 			// Grab an exclusive lock so that we're only reading one function into
 			// memory at a time.
 			// See https://github.com/hashicorp/terraform/issues/9364
-			conns.GlobalMutexKV.Lock(awsMutexLambdaKey)
-			defer conns.GlobalMutexKV.Unlock(awsMutexLambdaKey)
+			conns.GlobalMutexKV.Lock(keyMutex)
+			defer conns.GlobalMutexKV.Unlock(keyMutex)
 			file, err := loadFileContent(v.(string))
 			if err != nil {
 				return fmt.Errorf("unable to load %q: %w", v.(string), err)
@@ -1284,7 +1282,7 @@ func resourceFunctionUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		var output *lambda.FunctionConfiguration
-		err := resource.Retry(PropagationTimeout, func() *resource.RetryError {
+		err := resource.Retry(propagationTimeout, func() *resource.RetryError {
 			var err error
 			output, err = conn.PublishVersion(versionReq)
 
@@ -1343,7 +1341,7 @@ func readEnvironmentVariables(ev map[string]interface{}) map[string]string {
 	return variables
 }
 
-func functionInvokeArn(functionArn string, meta interface{}) string {
+func functionInvokeARN(functionArn string, meta interface{}) string {
 	return arn.ARN{
 		Partition: meta.(*conns.AWSClient).Partition,
 		Service:   "apigateway",

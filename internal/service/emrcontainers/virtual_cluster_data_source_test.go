@@ -26,12 +26,12 @@ func TestAccEMRContainersVirtualClusterDataSource_basic(t *testing.T) {
 			acctest.PreCheckIAMServiceLinkedRole(t, "/aws-service-role/emr-containers.amazonaws.com")
 		},
 		ErrorCheck:        acctest.ErrorCheck(t, eks.EndpointsID),
-		Providers:         acctest.Providers,
+		ProviderFactories: acctest.ProviderFactories,
 		ExternalProviders: testExternalProviders,
 		CheckDestroy:      testAccCheckVirtualClusterDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccVirtualClusterDataSourceConfig_Basic(rName),
+				Config: testAccVirtualClusterDataSourceConfig_basic(rName),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrPair(resourceName, "arn", dataSourceResourceName, "arn"),
 					resource.TestCheckResourceAttr(dataSourceResourceName, "container_provider.#", "1"),
@@ -51,8 +51,8 @@ func TestAccEMRContainersVirtualClusterDataSource_basic(t *testing.T) {
 	})
 }
 
-func testAccVirtualClusterDataSourceConfig_Basic(rName string) string {
-	return acctest.ConfigCompose(testAccVirtualClusterConfig(rName), `
+func testAccVirtualClusterDataSourceConfig_basic(rName string) string {
+	return acctest.ConfigCompose(testAccVirtualClusterConfig_basic(rName), `
 data "aws_emrcontainers_virtual_cluster" "test" {
   virtual_cluster_id = aws_emrcontainers_virtual_cluster.test.id
 }

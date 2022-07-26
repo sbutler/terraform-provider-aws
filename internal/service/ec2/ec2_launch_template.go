@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -197,6 +196,10 @@ func ResourceLaunchTemplate() *schema.Resource {
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(0, 255),
 			},
+			"disable_api_stop": {
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 			"disable_api_termination": {
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -338,9 +341,255 @@ func ResourceLaunchTemplate() *schema.Resource {
 					},
 				},
 			},
-			"instance_type": {
-				Type:     schema.TypeString,
+			"instance_requirements": {
+				Type:     schema.TypeList,
 				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"accelerator_count": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(0),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+						"accelerator_manufacturers": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.AcceleratorManufacturer_Values(), false),
+							},
+						},
+						"accelerator_names": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.AcceleratorName_Values(), false),
+							},
+						},
+						"accelerator_total_memory_mib": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+						"accelerator_types": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.AcceleratorType_Values(), false),
+							},
+						},
+						"bare_metal": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice(ec2.BareMetal_Values(), false),
+						},
+						"baseline_ebs_bandwidth_mbps": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+						"burstable_performance": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice(ec2.BurstablePerformance_Values(), false),
+						},
+						"cpu_manufacturers": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.CpuManufacturer_Values(), false),
+							},
+						},
+						"excluded_instance_types": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							MaxItems: 400,
+							Elem:     &schema.Schema{Type: schema.TypeString},
+						},
+						"instance_generations": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.InstanceGeneration_Values(), false),
+							},
+						},
+						"local_storage": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice(ec2.LocalStorage_Values(), false),
+						},
+						"local_storage_types": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice(ec2.LocalStorageType_Values(), false),
+							},
+						},
+						"memory_gib_per_vcpu": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeFloat,
+										Optional:     true,
+										ValidateFunc: verify.FloatGreaterThan(0.0),
+									},
+									"min": {
+										Type:         schema.TypeFloat,
+										Optional:     true,
+										ValidateFunc: verify.FloatGreaterThan(0.0),
+									},
+								},
+							},
+						},
+						"memory_mib": {
+							Type:     schema.TypeList,
+							Required: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Required:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+						"network_interface_count": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+						"on_demand_max_price_percentage_over_lowest_price": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							ValidateFunc: validation.IntAtLeast(1),
+						},
+						"require_hibernate_support": {
+							Type:     schema.TypeBool,
+							Optional: true,
+						},
+						"spot_max_price_percentage_over_lowest_price": {
+							Type:         schema.TypeInt,
+							Optional:     true,
+							ValidateFunc: validation.IntAtLeast(1),
+						},
+						"total_local_storage_gb": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeFloat,
+										Optional:     true,
+										ValidateFunc: verify.FloatGreaterThan(0.0),
+									},
+									"min": {
+										Type:         schema.TypeFloat,
+										Optional:     true,
+										ValidateFunc: verify.FloatGreaterThan(0.0),
+									},
+								},
+							},
+						},
+						"vcpu_count": {
+							Type:     schema.TypeList,
+							Required: true,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"max": {
+										Type:         schema.TypeInt,
+										Optional:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+									"min": {
+										Type:         schema.TypeInt,
+										Required:     true,
+										ValidateFunc: validation.IntAtLeast(1),
+									},
+								},
+							},
+						},
+					},
+				},
+				ConflictsWith: []string{"instance_type"},
+			},
+			"instance_type": {
+				Type:          schema.TypeString,
+				Optional:      true,
+				ConflictsWith: []string{"instance_requirements"},
 			},
 			"kernel_id": {
 				Type:     schema.TypeString,
@@ -711,12 +960,17 @@ func resourceLaunchTemplateCreate(d *schema.ResourceData, meta interface{}) erro
 	input := &ec2.CreateLaunchTemplateInput{
 		ClientToken:        aws.String(resource.UniqueId()),
 		LaunchTemplateName: aws.String(name),
-		LaunchTemplateData: expandRequestLaunchTemplateData(d),
-		TagSpecifications:  ec2TagSpecificationsFromKeyValueTags(tags, ec2.ResourceTypeLaunchTemplate),
+		TagSpecifications:  tagSpecificationsFromKeyValueTags(tags, ec2.ResourceTypeLaunchTemplate),
 	}
 
 	if v, ok := d.GetOk("description"); ok {
 		input.VersionDescription = aws.String(v.(string))
+	}
+
+	if v, err := expandRequestLaunchTemplateData(conn, d); err == nil {
+		input.LaunchTemplateData = v
+	} else {
+		return err
 	}
 
 	log.Printf("[DEBUG] Creating EC2 Launch Template: %s", input)
@@ -769,7 +1023,7 @@ func resourceLaunchTemplateRead(d *schema.ResourceData, meta interface{}) error 
 	d.Set("name", lt.LaunchTemplateName)
 	d.Set("name_prefix", create.NamePrefixFromName(aws.StringValue(lt.LaunchTemplateName)))
 
-	if err := flattenResponseLaunchTemplateData(d, ltv.LaunchTemplateData); err != nil {
+	if err := flattenResponseLaunchTemplateData(conn, d, ltv.LaunchTemplateData); err != nil {
 		return err
 	}
 
@@ -796,6 +1050,7 @@ func resourceLaunchTemplateUpdate(d *schema.ResourceData, meta interface{}) erro
 		"cpu_options",
 		"credit_specification",
 		"description",
+		"disable_api_stop",
 		"disable_api_termination",
 		"ebs_optimized",
 		"elastic_gpu_specifications",
@@ -806,6 +1061,7 @@ func resourceLaunchTemplateUpdate(d *schema.ResourceData, meta interface{}) erro
 		"image_id",
 		"instance_initiated_shutdown_behavior",
 		"instance_market_options",
+		"instance_requirements",
 		"instance_type",
 		"kernel_id",
 		"key_name",
@@ -825,13 +1081,18 @@ func resourceLaunchTemplateUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.HasChanges(updateKeys...) {
 		input := &ec2.CreateLaunchTemplateVersionInput{
-			ClientToken:        aws.String(resource.UniqueId()),
-			LaunchTemplateData: expandRequestLaunchTemplateData(d),
-			LaunchTemplateId:   aws.String(d.Id()),
+			ClientToken:      aws.String(resource.UniqueId()),
+			LaunchTemplateId: aws.String(d.Id()),
 		}
 
 		if v, ok := d.GetOk("description"); ok {
 			input.VersionDescription = aws.String(v.(string))
+		}
+
+		if v, err := expandRequestLaunchTemplateData(conn, d); err == nil {
+			input.LaunchTemplateData = v
+		} else {
+			return err
 		}
 
 		output, err := conn.CreateLaunchTemplateVersion(input)
@@ -881,7 +1142,7 @@ func resourceLaunchTemplateDelete(d *schema.ResourceData, meta interface{}) erro
 		LaunchTemplateId: aws.String(d.Id()),
 	})
 
-	if tfawserr.ErrCodeEquals(err, ErrCodeInvalidLaunchTemplateIdNotFound) {
+	if tfawserr.ErrCodeEquals(err, errCodeInvalidLaunchTemplateIdNotFound) {
 		return nil
 	}
 
@@ -892,7 +1153,7 @@ func resourceLaunchTemplateDelete(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchTemplateData {
+func expandRequestLaunchTemplateData(conn *ec2.EC2, d *schema.ResourceData) (*ec2.RequestLaunchTemplateData, error) {
 	apiObject := &ec2.RequestLaunchTemplateData{
 		// Always set at least one field.
 		UserData: aws.String(d.Get("user_data").(string)),
@@ -915,11 +1176,25 @@ func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchT
 	}
 
 	if v, ok := d.GetOk("cpu_options"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		apiObject.CpuOptions = expandLaunchTemplateCpuOptionsRequest(v.([]interface{})[0].(map[string]interface{}))
+		apiObject.CpuOptions = expandLaunchTemplateCPUOptionsRequest(v.([]interface{})[0].(map[string]interface{}))
 	}
 
-	if v, ok := d.GetOk("credit_specification"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil && (strings.HasPrefix(instanceType, "t2") || strings.HasPrefix(instanceType, "t3")) {
-		apiObject.CreditSpecification = expandCreditSpecificationRequest(v.([]interface{})[0].(map[string]interface{}))
+	if v, ok := d.GetOk("credit_specification"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+		if instanceType != "" {
+			instanceTypeInfo, err := FindInstanceTypeByName(conn, instanceType)
+
+			if err != nil {
+				return nil, fmt.Errorf("reading EC2 Instance Type (%s): %w", instanceType, err)
+			}
+
+			if aws.BoolValue(instanceTypeInfo.BurstablePerformanceSupported) {
+				apiObject.CreditSpecification = expandCreditSpecificationRequest(v.([]interface{})[0].(map[string]interface{}))
+			}
+		}
+	}
+
+	if v, ok := d.GetOk("disable_api_stop"); ok {
+		apiObject.DisableApiStop = aws.Bool(v.(bool))
 	}
 
 	if v, ok := d.GetOk("disable_api_termination"); ok {
@@ -957,7 +1232,7 @@ func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchT
 	}
 
 	if v, ok := d.GetOk("iam_instance_profile"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		apiObject.IamInstanceProfile = expandLaunchTemplateIamInstanceProfileSpecificationRequest(v.([]interface{})[0].(map[string]interface{}))
+		apiObject.IamInstanceProfile = expandLaunchTemplateIAMInstanceProfileSpecificationRequest(v.([]interface{})[0].(map[string]interface{}))
 	}
 
 	if v, ok := d.GetOk("image_id"); ok {
@@ -970,6 +1245,10 @@ func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchT
 
 	if v, ok := d.GetOk("instance_market_options"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
 		apiObject.InstanceMarketOptions = expandLaunchTemplateInstanceMarketOptionsRequest(v.([]interface{})[0].(map[string]interface{}))
+	}
+
+	if v, ok := d.GetOk("instance_requirements"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+		apiObject.InstanceRequirements = expandInstanceRequirementsRequest(v.([]interface{})[0].(map[string]interface{}))
 	}
 
 	if v, ok := d.GetOk("kernel_id"); ok {
@@ -1009,7 +1288,7 @@ func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchT
 	}
 
 	if v, ok := d.GetOk("private_dns_name_options"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		apiObject.PrivateDnsNameOptions = expandLaunchTemplatePrivateDnsNameOptionsRequest(v.([]interface{})[0].(map[string]interface{}))
+		apiObject.PrivateDnsNameOptions = expandLaunchTemplatePrivateDNSNameOptionsRequest(v.([]interface{})[0].(map[string]interface{}))
 	}
 
 	if v, ok := d.GetOk("ram_disk_id"); ok {
@@ -1028,7 +1307,7 @@ func expandRequestLaunchTemplateData(d *schema.ResourceData) *ec2.RequestLaunchT
 		apiObject.SecurityGroupIds = flex.ExpandStringSet(v.(*schema.Set))
 	}
 
-	return apiObject
+	return apiObject, nil
 }
 
 func expandLaunchTemplateBlockDeviceMappingRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateBlockDeviceMappingRequest {
@@ -1039,7 +1318,7 @@ func expandLaunchTemplateBlockDeviceMappingRequest(tfMap map[string]interface{})
 	apiObject := &ec2.LaunchTemplateBlockDeviceMappingRequest{}
 
 	if v, ok := tfMap["ebs"].([]interface{}); ok && len(v) > 0 {
-		apiObject.Ebs = expandLaunchTemplateEbsBlockDeviceRequest(v[0].(map[string]interface{}))
+		apiObject.Ebs = expandLaunchTemplateEBSBlockDeviceRequest(v[0].(map[string]interface{}))
 	}
 
 	if v, ok := tfMap["device_name"].(string); ok && v != "" {
@@ -1083,7 +1362,7 @@ func expandLaunchTemplateBlockDeviceMappingRequests(tfList []interface{}) []*ec2
 	return apiObjects
 }
 
-func expandLaunchTemplateEbsBlockDeviceRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateEbsBlockDeviceRequest {
+func expandLaunchTemplateEBSBlockDeviceRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateEbsBlockDeviceRequest {
 	if tfMap == nil {
 		return nil
 	}
@@ -1147,7 +1426,7 @@ func expandLaunchTemplateCapacityReservationSpecificationRequest(tfMap map[strin
 	return apiObject
 }
 
-func expandLaunchTemplateCpuOptionsRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateCpuOptionsRequest {
+func expandLaunchTemplateCPUOptionsRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateCpuOptionsRequest {
 	if tfMap == nil {
 		return nil
 	}
@@ -1245,7 +1524,7 @@ func expandLaunchTemplateElasticInferenceAccelerators(tfList []interface{}) []*e
 	return apiObjects
 }
 
-func expandLaunchTemplateIamInstanceProfileSpecificationRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateIamInstanceProfileSpecificationRequest {
+func expandLaunchTemplateIAMInstanceProfileSpecificationRequest(tfMap map[string]interface{}) *ec2.LaunchTemplateIamInstanceProfileSpecificationRequest {
 	if tfMap == nil {
 		return nil
 	}
@@ -1276,6 +1555,260 @@ func expandLaunchTemplateInstanceMarketOptionsRequest(tfMap map[string]interface
 
 	if v, ok := tfMap["spot_options"].([]interface{}); ok && len(v) > 0 {
 		apiObject.SpotOptions = expandLaunchTemplateSpotMarketOptionsRequest(v[0].(map[string]interface{}))
+	}
+
+	return apiObject
+}
+
+func expandInstanceRequirementsRequest(tfMap map[string]interface{}) *ec2.InstanceRequirementsRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.InstanceRequirementsRequest{}
+
+	if v, ok := tfMap["accelerator_count"].([]interface{}); ok && len(v) > 0 {
+		apiObject.AcceleratorCount = expandAcceleratorCountRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["accelerator_manufacturers"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.AcceleratorManufacturers = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["accelerator_names"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.AcceleratorNames = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["accelerator_total_memory_mib"].([]interface{}); ok && len(v) > 0 {
+		apiObject.AcceleratorTotalMemoryMiB = expandAcceleratorTotalMemoryMiBRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["accelerator_types"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.AcceleratorTypes = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["bare_metal"].(string); ok && v != "" {
+		apiObject.BareMetal = aws.String(v)
+	}
+
+	if v, ok := tfMap["baseline_ebs_bandwidth_mbps"].([]interface{}); ok && len(v) > 0 {
+		apiObject.BaselineEbsBandwidthMbps = expandBaselineEBSBandwidthMbpsRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["burstable_performance"].(string); ok && v != "" {
+		apiObject.BurstablePerformance = aws.String(v)
+	}
+
+	if v, ok := tfMap["cpu_manufacturers"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.CpuManufacturers = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["excluded_instance_types"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.ExcludedInstanceTypes = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["instance_generations"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.InstanceGenerations = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["local_storage"].(string); ok && v != "" {
+		apiObject.LocalStorage = aws.String(v)
+	}
+
+	if v, ok := tfMap["local_storage_types"].(*schema.Set); ok && v.Len() > 0 {
+		apiObject.LocalStorageTypes = flex.ExpandStringSet(v)
+	}
+
+	if v, ok := tfMap["memory_gib_per_vcpu"].([]interface{}); ok && len(v) > 0 {
+		apiObject.MemoryGiBPerVCpu = expandMemoryGiBPerVCPURequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["memory_mib"].([]interface{}); ok && len(v) > 0 {
+		apiObject.MemoryMiB = expandMemoryMiBRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["network_interface_count"].([]interface{}); ok && len(v) > 0 {
+		apiObject.NetworkInterfaceCount = expandNetworkInterfaceCountRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["on_demand_max_price_percentage_over_lowest_price"].(int); ok && v != 0 {
+		apiObject.OnDemandMaxPricePercentageOverLowestPrice = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["require_hibernate_support"].(bool); ok && v {
+		apiObject.RequireHibernateSupport = aws.Bool(v)
+	}
+
+	if v, ok := tfMap["spot_max_price_percentage_over_lowest_price"].(int); ok && v != 0 {
+		apiObject.SpotMaxPricePercentageOverLowestPrice = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["total_local_storage_gb"].([]interface{}); ok && len(v) > 0 {
+		apiObject.TotalLocalStorageGB = expandTotalLocalStorageGBRequest(v[0].(map[string]interface{}))
+	}
+
+	if v, ok := tfMap["vcpu_count"].([]interface{}); ok && len(v) > 0 {
+		apiObject.VCpuCount = expandVCPUCountRangeRequest(v[0].(map[string]interface{}))
+	}
+
+	return apiObject
+}
+
+func expandAcceleratorCountRequest(tfMap map[string]interface{}) *ec2.AcceleratorCountRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.AcceleratorCountRequest{}
+
+	var min int
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
+	}
+
+	return apiObject
+}
+
+func expandAcceleratorTotalMemoryMiBRequest(tfMap map[string]interface{}) *ec2.AcceleratorTotalMemoryMiBRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.AcceleratorTotalMemoryMiBRequest{}
+
+	var min int
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
+	}
+
+	return apiObject
+}
+
+func expandBaselineEBSBandwidthMbpsRequest(tfMap map[string]interface{}) *ec2.BaselineEbsBandwidthMbpsRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.BaselineEbsBandwidthMbpsRequest{}
+
+	var min int
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
+	}
+
+	return apiObject
+}
+
+func expandMemoryGiBPerVCPURequest(tfMap map[string]interface{}) *ec2.MemoryGiBPerVCpuRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.MemoryGiBPerVCpuRequest{}
+
+	var min float64
+	if v, ok := tfMap["min"].(float64); ok {
+		min = v
+		apiObject.Min = aws.Float64(v)
+	}
+
+	if v, ok := tfMap["max"].(float64); ok && v >= min {
+		apiObject.Max = aws.Float64(v)
+	}
+
+	return apiObject
+}
+
+func expandMemoryMiBRequest(tfMap map[string]interface{}) *ec2.MemoryMiBRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.MemoryMiBRequest{}
+
+	var min int
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
+	}
+
+	return apiObject
+}
+
+func expandNetworkInterfaceCountRequest(tfMap map[string]interface{}) *ec2.NetworkInterfaceCountRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.NetworkInterfaceCountRequest{}
+
+	var min int
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
+	}
+
+	return apiObject
+}
+
+func expandTotalLocalStorageGBRequest(tfMap map[string]interface{}) *ec2.TotalLocalStorageGBRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.TotalLocalStorageGBRequest{}
+
+	var min float64
+	if v, ok := tfMap["min"].(float64); ok {
+		min = v
+		apiObject.Min = aws.Float64(v)
+	}
+
+	if v, ok := tfMap["max"].(float64); ok && v >= min {
+		apiObject.Max = aws.Float64(v)
+	}
+
+	return apiObject
+}
+
+func expandVCPUCountRangeRequest(tfMap map[string]interface{}) *ec2.VCpuCountRangeRequest {
+	if tfMap == nil {
+		return nil
+	}
+
+	apiObject := &ec2.VCpuCountRangeRequest{}
+
+	min := 0
+	if v, ok := tfMap["min"].(int); ok {
+		min = v
+		apiObject.Min = aws.Int64(int64(v))
+	}
+
+	if v, ok := tfMap["max"].(int); ok && v >= min {
+		apiObject.Max = aws.Int64(int64(v))
 	}
 
 	return apiObject
@@ -1574,7 +2107,7 @@ func expandLaunchTemplatePlacementRequest(tfMap map[string]interface{}) *ec2.Lau
 	return apiObject
 }
 
-func expandLaunchTemplatePrivateDnsNameOptionsRequest(tfMap map[string]interface{}) *ec2.LaunchTemplatePrivateDnsNameOptionsRequest {
+func expandLaunchTemplatePrivateDNSNameOptionsRequest(tfMap map[string]interface{}) *ec2.LaunchTemplatePrivateDnsNameOptionsRequest {
 	if tfMap == nil {
 		return nil
 	}
@@ -1637,7 +2170,9 @@ func expandLaunchTemplateTagSpecificationRequests(tfList []interface{}) []*ec2.L
 	return apiObjects
 }
 
-func flattenResponseLaunchTemplateData(d *schema.ResourceData, apiObject *ec2.ResponseLaunchTemplateData) error {
+func flattenResponseLaunchTemplateData(conn *ec2.EC2, d *schema.ResourceData, apiObject *ec2.ResponseLaunchTemplateData) error {
+	instanceType := aws.StringValue(apiObject.InstanceType)
+
 	if err := d.Set("block_device_mappings", flattenLaunchTemplateBlockDeviceMappings(apiObject.BlockDeviceMappings)); err != nil {
 		return fmt.Errorf("error setting block_device_mappings: %w", err)
 	}
@@ -1649,17 +2184,26 @@ func flattenResponseLaunchTemplateData(d *schema.ResourceData, apiObject *ec2.Re
 		d.Set("capacity_reservation_specification", nil)
 	}
 	if apiObject.CpuOptions != nil {
-		if err := d.Set("cpu_options", []interface{}{flattenLaunchTemplateCpuOptions(apiObject.CpuOptions)}); err != nil {
+		if err := d.Set("cpu_options", []interface{}{flattenLaunchTemplateCPUOptions(apiObject.CpuOptions)}); err != nil {
 			return fmt.Errorf("error setting cpu_options: %w", err)
 		}
 	} else {
 		d.Set("cpu_options", nil)
 	}
-	if apiObject.CreditSpecification != nil && (strings.HasPrefix(aws.StringValue(apiObject.InstanceType), "t2") || strings.HasPrefix(aws.StringValue(apiObject.InstanceType), "t3")) {
-		if err := d.Set("credit_specification", []interface{}{flattenCreditSpecification(apiObject.CreditSpecification)}); err != nil {
-			return fmt.Errorf("error setting credit_specification: %w", err)
+	if apiObject.CreditSpecification != nil && instanceType != "" {
+		instanceTypeInfo, err := FindInstanceTypeByName(conn, instanceType)
+
+		if err != nil {
+			return fmt.Errorf("reading EC2 Instance Type (%s): %w", instanceType, err)
+		}
+
+		if aws.BoolValue(instanceTypeInfo.BurstablePerformanceSupported) {
+			if err := d.Set("credit_specification", []interface{}{flattenCreditSpecification(apiObject.CreditSpecification)}); err != nil {
+				return fmt.Errorf("error setting credit_specification: %w", err)
+			}
 		}
 	} // Don't overwrite any configured value.
+	d.Set("disable_api_stop", apiObject.DisableApiStop)
 	d.Set("disable_api_termination", apiObject.DisableApiTermination)
 	if apiObject.EbsOptimized != nil {
 		d.Set("ebs_optimized", strconv.FormatBool(aws.BoolValue(apiObject.EbsOptimized)))
@@ -1695,7 +2239,7 @@ func flattenResponseLaunchTemplateData(d *schema.ResourceData, apiObject *ec2.Re
 		d.Set("hibernation_options", nil)
 	}
 	if apiObject.IamInstanceProfile != nil {
-		if err := d.Set("iam_instance_profile", []interface{}{flattenLaunchTemplateIamInstanceProfileSpecification(apiObject.IamInstanceProfile)}); err != nil {
+		if err := d.Set("iam_instance_profile", []interface{}{flattenLaunchTemplateIAMInstanceProfileSpecification(apiObject.IamInstanceProfile)}); err != nil {
 			return fmt.Errorf("error setting iam_instance_profile: %w", err)
 		}
 	} else {
@@ -1710,7 +2254,14 @@ func flattenResponseLaunchTemplateData(d *schema.ResourceData, apiObject *ec2.Re
 	} else {
 		d.Set("instance_market_options", nil)
 	}
-	d.Set("instance_type", apiObject.InstanceType)
+	if apiObject.InstanceRequirements != nil {
+		if err := d.Set("instance_requirements", []interface{}{flattenInstanceRequirements(apiObject.InstanceRequirements)}); err != nil {
+			return fmt.Errorf("error setting instance_requirements: %w", err)
+		}
+	} else {
+		d.Set("instance_requirements", nil)
+	}
+	d.Set("instance_type", instanceType)
 	d.Set("kernel_id", apiObject.KernelId)
 	d.Set("key_name", apiObject.KeyName)
 	if err := d.Set("license_specification", flattenLaunchTemplateLicenseConfigurations(apiObject.LicenseSpecifications)); err != nil {
@@ -1752,7 +2303,7 @@ func flattenResponseLaunchTemplateData(d *schema.ResourceData, apiObject *ec2.Re
 		d.Set("placement", nil)
 	}
 	if apiObject.PrivateDnsNameOptions != nil {
-		if err := d.Set("private_dns_name_options", []interface{}{flattenLaunchTemplatePrivateDnsNameOptions(apiObject.PrivateDnsNameOptions)}); err != nil {
+		if err := d.Set("private_dns_name_options", []interface{}{flattenLaunchTemplatePrivateDNSNameOptions(apiObject.PrivateDnsNameOptions)}); err != nil {
 			return fmt.Errorf("error setting private_dns_name_options: %w", err)
 		}
 	} else {
@@ -1781,7 +2332,7 @@ func flattenLaunchTemplateBlockDeviceMapping(apiObject *ec2.LaunchTemplateBlockD
 	}
 
 	if v := apiObject.Ebs; v != nil {
-		tfMap["ebs"] = []interface{}{flattenLaunchTemplateEbsBlockDevice(v)}
+		tfMap["ebs"] = []interface{}{flattenLaunchTemplateEBSBlockDevice(v)}
 	}
 
 	if v := apiObject.NoDevice; v != nil {
@@ -1813,7 +2364,7 @@ func flattenLaunchTemplateBlockDeviceMappings(apiObjects []*ec2.LaunchTemplateBl
 	return tfList
 }
 
-func flattenLaunchTemplateEbsBlockDevice(apiObject *ec2.LaunchTemplateEbsBlockDevice) map[string]interface{} {
+func flattenLaunchTemplateEBSBlockDevice(apiObject *ec2.LaunchTemplateEbsBlockDevice) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -1873,7 +2424,7 @@ func flattenLaunchTemplateCapacityReservationSpecificationResponse(apiObject *ec
 	return tfMap
 }
 
-func flattenLaunchTemplateCpuOptions(apiObject *ec2.LaunchTemplateCpuOptions) map[string]interface{} {
+func flattenLaunchTemplateCPUOptions(apiObject *ec2.LaunchTemplateCpuOptions) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -1969,7 +2520,7 @@ func flattenLaunchTemplateElasticInferenceAcceleratorResponses(apiObjects []*ec2
 	return tfList
 }
 
-func flattenLaunchTemplateIamInstanceProfileSpecification(apiObject *ec2.LaunchTemplateIamInstanceProfileSpecification) map[string]interface{} {
+func flattenLaunchTemplateIAMInstanceProfileSpecification(apiObject *ec2.LaunchTemplateIamInstanceProfileSpecification) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -2000,6 +2551,244 @@ func flattenLaunchTemplateInstanceMarketOptions(apiObject *ec2.LaunchTemplateIns
 
 	if v := apiObject.SpotOptions; v != nil {
 		tfMap["spot_options"] = []interface{}{flattenLaunchTemplateSpotMarketOptions(v)}
+	}
+
+	return tfMap
+}
+
+func flattenInstanceRequirements(apiObject *ec2.InstanceRequirements) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.AcceleratorCount; v != nil {
+		tfMap["accelerator_count"] = []interface{}{flattenAcceleratorCount(v)}
+	}
+
+	if v := apiObject.AcceleratorManufacturers; v != nil {
+		tfMap["accelerator_manufacturers"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.AcceleratorNames; v != nil {
+		tfMap["accelerator_names"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.AcceleratorTotalMemoryMiB; v != nil {
+		tfMap["accelerator_total_memory_mib"] = []interface{}{flattenAcceleratorTotalMemoryMiB(v)}
+	}
+
+	if v := apiObject.AcceleratorTypes; v != nil {
+		tfMap["accelerator_types"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.BareMetal; v != nil {
+		tfMap["bare_metal"] = aws.StringValue(v)
+	}
+
+	if v := apiObject.BaselineEbsBandwidthMbps; v != nil {
+		tfMap["baseline_ebs_bandwidth_mbps"] = []interface{}{flattenBaselineEBSBandwidthMbps(v)}
+	}
+
+	if v := apiObject.BurstablePerformance; v != nil {
+		tfMap["burstable_performance"] = aws.StringValue(v)
+	}
+
+	if v := apiObject.CpuManufacturers; v != nil {
+		tfMap["cpu_manufacturers"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.ExcludedInstanceTypes; v != nil {
+		tfMap["excluded_instance_types"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.InstanceGenerations; v != nil {
+		tfMap["instance_generations"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.LocalStorage; v != nil {
+		tfMap["local_storage"] = aws.StringValue(v)
+	}
+
+	if v := apiObject.LocalStorageTypes; v != nil {
+		tfMap["local_storage_types"] = aws.StringValueSlice(v)
+	}
+
+	if v := apiObject.MemoryGiBPerVCpu; v != nil {
+		tfMap["memory_gib_per_vcpu"] = []interface{}{flattenMemoryGiBPerVCPU(v)}
+	}
+
+	if v := apiObject.MemoryMiB; v != nil {
+		tfMap["memory_mib"] = []interface{}{flattenMemoryMiB(v)}
+	}
+
+	if v := apiObject.NetworkInterfaceCount; v != nil {
+		tfMap["network_interface_count"] = []interface{}{flattenNetworkInterfaceCount(v)}
+	}
+
+	if v := apiObject.OnDemandMaxPricePercentageOverLowestPrice; v != nil {
+		tfMap["on_demand_max_price_percentage_over_lowest_price"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.RequireHibernateSupport; v != nil {
+		tfMap["require_hibernate_support"] = aws.BoolValue(v)
+	}
+
+	if v := apiObject.SpotMaxPricePercentageOverLowestPrice; v != nil {
+		tfMap["spot_max_price_percentage_over_lowest_price"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.TotalLocalStorageGB; v != nil {
+		tfMap["total_local_storage_gb"] = []interface{}{flattenTotalLocalStorageGB(v)}
+	}
+
+	if v := apiObject.VCpuCount; v != nil {
+		tfMap["vcpu_count"] = []interface{}{flattenVCPUCountRange(v)}
+	}
+
+	return tfMap
+}
+
+func flattenAcceleratorCount(apiObject *ec2.AcceleratorCount) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenAcceleratorTotalMemoryMiB(apiObject *ec2.AcceleratorTotalMemoryMiB) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenBaselineEBSBandwidthMbps(apiObject *ec2.BaselineEbsBandwidthMbps) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenMemoryGiBPerVCPU(apiObject *ec2.MemoryGiBPerVCpu) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Float64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Float64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenMemoryMiB(apiObject *ec2.MemoryMiB) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenNetworkInterfaceCount(apiObject *ec2.NetworkInterfaceCount) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenTotalLocalStorageGB(apiObject *ec2.TotalLocalStorageGB) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Float64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Float64Value(v)
+	}
+
+	return tfMap
+}
+
+func flattenVCPUCountRange(apiObject *ec2.VCpuCountRange) map[string]interface{} {
+	if apiObject == nil {
+		return nil
+	}
+
+	tfMap := map[string]interface{}{}
+
+	if v := apiObject.Max; v != nil {
+		tfMap["max"] = aws.Int64Value(v)
+	}
+
+	if v := apiObject.Min; v != nil {
+		tfMap["min"] = aws.Int64Value(v)
 	}
 
 	return tfMap
@@ -2281,7 +3070,7 @@ func flattenLaunchTemplatePlacement(apiObject *ec2.LaunchTemplatePlacement) map[
 	return tfMap
 }
 
-func flattenLaunchTemplatePrivateDnsNameOptions(apiObject *ec2.LaunchTemplatePrivateDnsNameOptions) map[string]interface{} {
+func flattenLaunchTemplatePrivateDNSNameOptions(apiObject *ec2.LaunchTemplatePrivateDnsNameOptions) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}

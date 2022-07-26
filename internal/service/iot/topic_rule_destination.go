@@ -14,7 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
-	tfiam "github.com/hashicorp/terraform-provider-aws/internal/service/iam"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
 )
@@ -91,11 +90,11 @@ func resourceTopicRuleDestinationCreate(ctx context.Context, d *schema.ResourceD
 	}
 
 	if v, ok := d.GetOk("vpc_configuration"); ok && len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
-		input.DestinationConfiguration.VpcConfiguration = expandVpcDestinationConfiguration(v.([]interface{})[0].(map[string]interface{}))
+		input.DestinationConfiguration.VpcConfiguration = expandVPCDestinationConfiguration(v.([]interface{})[0].(map[string]interface{}))
 	}
 
 	log.Printf("[INFO] Creating IoT Topic Rule Destination: %s", input)
-	outputRaw, err := tfresource.RetryWhen(tfiam.PropagationTimeout,
+	outputRaw, err := tfresource.RetryWhen(propagationTimeout,
 		func() (interface{}, error) {
 			return conn.CreateTopicRuleDestinationWithContext(ctx, input)
 		},
@@ -155,7 +154,7 @@ func resourceTopicRuleDestinationRead(ctx context.Context, d *schema.ResourceDat
 	d.Set("arn", output.Arn)
 	d.Set("enabled", aws.StringValue(output.Status) == iot.TopicRuleDestinationStatusEnabled)
 	if output.VpcProperties != nil {
-		if err := d.Set("vpc_configuration", []interface{}{flattenVpcDestinationProperties(output.VpcProperties)}); err != nil {
+		if err := d.Set("vpc_configuration", []interface{}{flattenVPCDestinationProperties(output.VpcProperties)}); err != nil {
 			return diag.Errorf("setting vpc_configuration: %s", err)
 		}
 	} else {
@@ -213,7 +212,7 @@ func resourceTopicRuleDestinationDelete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-func expandVpcDestinationConfiguration(tfMap map[string]interface{}) *iot.VpcDestinationConfiguration {
+func expandVPCDestinationConfiguration(tfMap map[string]interface{}) *iot.VpcDestinationConfiguration {
 	if tfMap == nil {
 		return nil
 	}
@@ -239,7 +238,7 @@ func expandVpcDestinationConfiguration(tfMap map[string]interface{}) *iot.VpcDes
 	return apiObject
 }
 
-func flattenVpcDestinationProperties(apiObject *iot.VpcDestinationProperties) map[string]interface{} {
+func flattenVPCDestinationProperties(apiObject *iot.VpcDestinationProperties) map[string]interface{} {
 	if apiObject == nil {
 		return nil
 	}
@@ -321,7 +320,7 @@ func waitTopicRuleDestinationDeleted(ctx context.Context, conn *iot.IoT, arn str
 
 func waitTopicRuleDestinationDisabled(ctx context.Context, conn *iot.IoT, arn string, timeout time.Duration) (*iot.TopicRuleDestination, error) {
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{iot.TopicRuleDestinationStatusEnabled},
+		Pending: []string{iot.TopicRuleDestinationStatusInProgress},
 		Target:  []string{iot.TopicRuleDestinationStatusDisabled},
 		Refresh: statusTopicRuleDestination(ctx, conn, arn),
 		Timeout: timeout,
@@ -340,7 +339,7 @@ func waitTopicRuleDestinationDisabled(ctx context.Context, conn *iot.IoT, arn st
 
 func waitTopicRuleDestinationEnabled(ctx context.Context, conn *iot.IoT, arn string, timeout time.Duration) (*iot.TopicRuleDestination, error) {
 	stateConf := &resource.StateChangeConf{
-		Pending: []string{iot.TopicRuleDestinationStatusDisabled},
+		Pending: []string{iot.TopicRuleDestinationStatusInProgress},
 		Target:  []string{iot.TopicRuleDestinationStatusEnabled},
 		Refresh: statusTopicRuleDestination(ctx, conn, arn),
 		Timeout: timeout,
