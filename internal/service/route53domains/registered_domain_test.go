@@ -42,11 +42,11 @@ func TestAccRoute53Domains_serial(t *testing.T) {
 func testAccPreCheck(t *testing.T) {
 	acctest.PreCheckPartitionHasService(names.Route53DomainsEndpointID, t)
 
-	conn := acctest.Provider.Meta().(*conns.AWSClient).Route53DomainsConn
+	conn := acctest.Provider.Meta().(*conns.AWSClient).Route53DomainsClient
 
 	input := &route53domains.ListDomainsInput{}
 
-	_, err := conn.ListDomains(context.TODO(), input)
+	_, err := conn.ListDomains(context.Background(), input)
 
 	if acctest.PreCheckSkipError(err) {
 		t.Skipf("skipping acceptance testing: %s", err)

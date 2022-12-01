@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
-	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	tfmemorydb "github.com/hashicorp/terraform-provider-aws/internal/service/memorydb"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 )
@@ -96,7 +95,7 @@ func TestAccMemoryDBSubnetGroup_nameGenerated(t *testing.T) {
 				Config: testAccSubnetGroupConfig_noName(rName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubnetGroupExists(resourceName),
-					create.TestCheckResourceAttrNameGenerated(resourceName, "name"),
+					acctest.CheckResourceAttrNameGenerated(resourceName, "name"),
 					resource.TestCheckResourceAttr(resourceName, "name_prefix", "terraform-"),
 				),
 			},
@@ -118,7 +117,7 @@ func TestAccMemoryDBSubnetGroup_namePrefix(t *testing.T) {
 				Config: testAccSubnetGroupConfig_namePrefix(rName, "tftest-"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckSubnetGroupExists(resourceName),
-					create.TestCheckResourceAttrNameFromPrefix(resourceName, "name", "tftest-"),
+					acctest.CheckResourceAttrNameFromPrefix(resourceName, "name", "tftest-"),
 					resource.TestCheckResourceAttr(resourceName, "name_prefix", "tftest-"),
 				),
 			},
@@ -331,11 +330,7 @@ func testAccCheckSubnetGroupExists(n string) resource.TestCheckFunc {
 
 		_, err := tfmemorydb.FindSubnetGroupByName(context.Background(), conn, rs.Primary.Attributes["name"])
 
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return err
 	}
 }
 
@@ -345,7 +340,7 @@ func testAccSubnetGroupConfig_basic(rName string) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name       = %[1]q
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 
   tags = {
     Test = "test"
@@ -360,7 +355,7 @@ func testAccSubnetGroupConfig_noName(rName string) string {
 		acctest.ConfigVPCWithSubnets(rName, 2),
 		`
 resource "aws_memorydb_subnet_group" "test" {
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 }
 `,
 	)
@@ -372,7 +367,7 @@ func testAccSubnetGroupConfig_namePrefix(rName, rNamePrefix string) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name_prefix = %[1]q
-  subnet_ids  = aws_subnet.test.*.id
+  subnet_ids  = aws_subnet.test[*].id
 }
 `, rNamePrefix),
 	)
@@ -384,7 +379,7 @@ func testAccSubnetGroupConfig_description(rName, description string) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name        = %[1]q
-  subnet_ids  = aws_subnet.test.*.id
+  subnet_ids  = aws_subnet.test[*].id
   description = %[2]q
 }
 `, rName, description),
@@ -397,7 +392,7 @@ func testAccSubnetGroupConfig_count(rName string, subnetCount int) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name       = %[1]q
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 }
 `, rName),
 	)
@@ -409,7 +404,7 @@ func testAccSubnetGroupConfig_tags0(rName string) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name       = %[1]q
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 }
 `, rName),
 	)
@@ -421,7 +416,7 @@ func testAccSubnetGroupConfig_tags1(rName, tag1Key, tag1Value string) string {
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name       = %[1]q
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 
   tags = {
     %[2]q = %[3]q
@@ -437,7 +432,7 @@ func testAccSubnetGroupConfig_tags2(rName, tag1Key, tag1Value, tag2Key, tag2Valu
 		fmt.Sprintf(`
 resource "aws_memorydb_subnet_group" "test" {
   name       = %[1]q
-  subnet_ids = aws_subnet.test.*.id
+  subnet_ids = aws_subnet.test[*].id
 
   tags = {
     %[2]q = %[3]q

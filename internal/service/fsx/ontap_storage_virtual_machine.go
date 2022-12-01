@@ -255,7 +255,6 @@ func resourceOntapStorageVirtualMachineCreate(d *schema.ResourceData, meta inter
 		input.Tags = Tags(tags.IgnoreAWS())
 	}
 
-	log.Printf("[DEBUG] Creating FSx ONTAP Storage Virtual Machine: %s", input)
 	result, err := conn.CreateStorageVirtualMachine(input)
 
 	if err != nil {
@@ -269,7 +268,6 @@ func resourceOntapStorageVirtualMachineCreate(d *schema.ResourceData, meta inter
 	}
 
 	return resourceOntapStorageVirtualMachineRead(d, meta)
-
 }
 
 func resourceOntapStorageVirtualMachineRead(d *schema.ResourceData, meta interface{}) error {
@@ -295,7 +293,9 @@ func resourceOntapStorageVirtualMachineRead(d *schema.ResourceData, meta interfa
 	//RootVolumeSecurityStyle and SVMAdminPassword are write only properties so they don't get returned from the describe API so we just store the original setting to state
 	d.Set("root_volume_security_style", d.Get("root_volume_security_style").(string))
 	d.Set("svm_admin_password", d.Get("svm_admin_password").(string))
-	d.Set("subtype", storageVirtualMachine.Subtype)
+	// Subtype removed in AWS SDK for Go v1.44.147.
+	// d.Set("subtype", storageVirtualMachine.Subtype)
+	d.Set("subtype", "DEFAULT")
 	d.Set("uuid", storageVirtualMachine.UUID)
 
 	if err := d.Set("active_directory_configuration", flattenOntapSvmActiveDirectoryConfiguration(d, storageVirtualMachine.ActiveDirectoryConfiguration)); err != nil {

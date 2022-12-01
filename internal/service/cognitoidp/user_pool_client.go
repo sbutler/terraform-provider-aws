@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	"github.com/hashicorp/terraform-provider-aws/internal/flex"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/internal/verify"
@@ -99,6 +100,12 @@ func ResourceUserPoolClient() *schema.Resource {
 						},
 					},
 				},
+			},
+			"auth_session_validity": {
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      3,
+				ValidateFunc: validation.IntBetween(3, 15),
 			},
 			"callback_urls": {
 				Type:     schema.TypeSet,
@@ -260,6 +267,10 @@ func resourceUserPoolClientCreate(d *schema.ResourceData, meta interface{}) erro
 		UserPoolId: aws.String(d.Get("user_pool_id").(string)),
 	}
 
+	if v, ok := d.GetOk("auth_session_validity"); ok {
+		params.AuthSessionValidity = aws.Int64(int64(v.(int)))
+	}
+
 	if v, ok := d.GetOk("generate_secret"); ok {
 		params.GenerateSecret = aws.Bool(v.(bool))
 	}
@@ -355,13 +366,13 @@ func resourceUserPoolClientRead(d *schema.ResourceData, meta interface{}) error 
 	userPoolClient, err := FindCognitoUserPoolClient(conn, d.Get("user_pool_id").(string), d.Id())
 
 	if !d.IsNewResource() && tfresource.NotFound(err) {
-		names.LogNotFoundRemoveState(names.CognitoIDP, names.ErrActionReading, ResUserPoolClient, d.Id())
+		create.LogNotFoundRemoveState(names.CognitoIDP, create.ErrActionReading, ResNameUserPoolClient, d.Id())
 		d.SetId("")
 		return nil
 	}
 
 	if err != nil {
-		return names.Error(names.CognitoIDP, names.ErrActionReading, ResUserPoolClient, d.Id(), err)
+		return create.Error(names.CognitoIDP, create.ErrActionReading, ResNameUserPoolClient, d.Id(), err)
 	}
 
 	d.Set("user_pool_id", userPoolClient.UserPoolId)
@@ -383,6 +394,7 @@ func resourceUserPoolClientRead(d *schema.ResourceData, meta interface{}) error 
 	d.Set("supported_identity_providers", flex.FlattenStringSet(userPoolClient.SupportedIdentityProviders))
 	d.Set("enable_token_revocation", userPoolClient.EnableTokenRevocation)
 	d.Set("enable_propagate_additional_user_context_data", userPoolClient.EnablePropagateAdditionalUserContextData)
+	d.Set("auth_session_validity", userPoolClient.AuthSessionValidity)
 
 	if err := d.Set("analytics_configuration", flattenUserPoolClientAnalyticsConfig(userPoolClient.AnalyticsConfiguration)); err != nil {
 		return fmt.Errorf("error setting analytics_configuration: %w", err)
@@ -474,6 +486,10 @@ func resourceUserPoolClientUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	if v, ok := d.GetOk("enable_propagate_additional_user_context_data"); ok {
 		params.EnablePropagateAdditionalUserContextData = aws.Bool(v.(bool))
+	}
+
+	if v, ok := d.GetOk("auth_session_validity"); ok {
+		params.AuthSessionValidity = aws.Int64(int64(v.(int)))
 	}
 
 	log.Printf("[DEBUG] Updating Cognito User Pool Client: %s", params)

@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	tftranscribe "github.com/hashicorp/terraform-provider-aws/internal/service/transcribe"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -208,7 +209,7 @@ func TestAccTranscribeVocabularyFilter_disappears(t *testing.T) {
 }
 
 func testAccCheckVocabularyFilterDestroy(s *terraform.State) error {
-	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 	ctx := context.Background()
 
 	for _, rs := range s.RootModule().Resources {
@@ -226,7 +227,7 @@ func testAccCheckVocabularyFilterDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return names.Error(names.Transcribe, names.ErrActionCheckingDestroyed, tftranscribe.ResNameVocabularyFilter, rs.Primary.ID, errors.New("not destroyed"))
+		return create.Error(names.Transcribe, create.ErrActionCheckingDestroyed, tftranscribe.ResNameVocabularyFilter, rs.Primary.ID, errors.New("not destroyed"))
 	}
 
 	return nil
@@ -236,19 +237,19 @@ func testAccCheckVocabularyFilterExists(name string, vocabularyFilter *transcrib
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, name, errors.New("not found"))
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, name, errors.New("not found"))
 		}
 
 		if rs.Primary.ID == "" {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, name, errors.New("not set"))
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, name, errors.New("not set"))
 		}
 
-		conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+		conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 		ctx := context.Background()
 		resp, err := tftranscribe.FindVocabularyFilterByName(ctx, conn, rs.Primary.ID)
 
 		if err != nil {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, rs.Primary.ID, err)
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabularyFilter, rs.Primary.ID, err)
 		}
 
 		*vocabularyFilter = *resp
@@ -258,7 +259,7 @@ func testAccCheckVocabularyFilterExists(name string, vocabularyFilter *transcrib
 }
 
 func testAccVocabularyFiltersPreCheck(t *testing.T) {
-	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 	ctx := context.Background()
 
 	input := &transcribe.ListVocabularyFiltersInput{}

@@ -149,7 +149,6 @@ func FindStackInstanceAccountIdByOrgIDs(conn *cloudformation.CloudFormation, sta
 					return false
 				}
 			}
-
 		}
 
 		return !lastPage

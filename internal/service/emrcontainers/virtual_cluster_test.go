@@ -17,7 +17,7 @@ import (
 
 func TestAccEMRContainersVirtualCluster_basic(t *testing.T) {
 	var v emrcontainers.VirtualCluster
-	rName := sdkacctest.RandomWithPrefix("tf-acc-test")
+	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
 	resourceName := "aws_emrcontainers_virtual_cluster.test"
 	testExternalProviders := map[string]resource.ExternalProvider{
 		"kubernetes": {
@@ -72,7 +72,7 @@ func TestAccEMRContainersVirtualCluster_basic(t *testing.T) {
 
 func TestAccEMRContainersVirtualCluster_disappears(t *testing.T) {
 	var v emrcontainers.VirtualCluster
-	rName := sdkacctest.RandomWithPrefix("tf-acc-test")
+	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
 	resourceName := "aws_emrcontainers_virtual_cluster.test"
 	testExternalProviders := map[string]resource.ExternalProvider{
 		"kubernetes": {
@@ -105,7 +105,7 @@ func TestAccEMRContainersVirtualCluster_disappears(t *testing.T) {
 
 func TestAccEMRContainersVirtualCluster_tags(t *testing.T) {
 	var v emrcontainers.VirtualCluster
-	rName := sdkacctest.RandomWithPrefix("tf-acc-test")
+	rName := sdkacctest.RandomWithPrefix(acctest.ResourcePrefix)
 	resourceName := "aws_emrcontainers_virtual_cluster.test"
 	testExternalProviders := map[string]resource.ExternalProvider{
 		"kubernetes": {
@@ -166,7 +166,7 @@ func testAccCheckVirtualClusterExists(n string, v *emrcontainers.VirtualCluster)
 
 		conn := acctest.Provider.Meta().(*conns.AWSClient).EMRContainersConn
 
-		output, err := tfemrcontainers.FindVirtualClusterByID(context.TODO(), conn, rs.Primary.ID)
+		output, err := tfemrcontainers.FindVirtualClusterByID(context.Background(), conn, rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -186,7 +186,7 @@ func testAccCheckVirtualClusterDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := tfemrcontainers.FindVirtualClusterByID(context.TODO(), conn, rs.Primary.ID)
+		_, err := tfemrcontainers.FindVirtualClusterByID(context.Background(), conn, rs.Primary.ID)
 
 		if tfresource.NotFound(err) {
 			continue
@@ -202,7 +202,7 @@ func testAccCheckVirtualClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccVirtualClusterBase(rName string) string {
+func testAccVirtualClusterConfig_base(rName string) string {
 	//lintignore:AT004
 	return acctest.ConfigCompose(acctest.ConfigAvailableAZsNoOptIn(), fmt.Sprintf(`
 data "aws_partition" "current" {}
@@ -470,7 +470,7 @@ EOF
 }
 
 func testAccVirtualClusterConfig_basic(rName string) string {
-	return acctest.ConfigCompose(testAccVirtualClusterBase(rName), fmt.Sprintf(`
+	return acctest.ConfigCompose(testAccVirtualClusterConfig_base(rName), fmt.Sprintf(`
 resource "aws_emrcontainers_virtual_cluster" "test" {
   container_provider {
     id   = aws_eks_cluster.test.name
@@ -491,7 +491,7 @@ resource "aws_emrcontainers_virtual_cluster" "test" {
 }
 
 func testAccVirtualClusterConfig_tags1(rName, tagKey1, tagValue1 string) string {
-	return acctest.ConfigCompose(testAccVirtualClusterBase(rName), fmt.Sprintf(`
+	return acctest.ConfigCompose(testAccVirtualClusterConfig_base(rName), fmt.Sprintf(`
 resource "aws_emrcontainers_virtual_cluster" "test" {
   container_provider {
     id   = aws_eks_cluster.test.name
@@ -516,7 +516,7 @@ resource "aws_emrcontainers_virtual_cluster" "test" {
 }
 
 func testAccVirtualClusterConfig_tags2(rName, tagKey1, tagValue1, tagKey2, tagValue2 string) string {
-	return acctest.ConfigCompose(testAccVirtualClusterBase(rName), fmt.Sprintf(`
+	return acctest.ConfigCompose(testAccVirtualClusterConfig_base(rName), fmt.Sprintf(`
 resource "aws_emrcontainers_virtual_cluster" "test" {
   container_provider {
     id   = aws_eks_cluster.test.name
