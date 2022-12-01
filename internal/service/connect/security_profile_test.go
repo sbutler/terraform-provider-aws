@@ -15,23 +15,6 @@ import (
 	tfconnect "github.com/hashicorp/terraform-provider-aws/internal/service/connect"
 )
 
-//Serialized acceptance tests due to Connect account limits (max 2 parallel tests)
-func TestAccConnectSecurityProfile_serial(t *testing.T) {
-	testCases := map[string]func(t *testing.T){
-		"basic":             testAccSecurityProfile_basic,
-		"disappears":        testAccSecurityProfile_disappears,
-		"updatePermissions": testAccSecurityProfile_updatePermissions,
-		"updateTags":        testAccSecurityProfile_updateTags,
-	}
-
-	for name, tc := range testCases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			tc(t)
-		})
-	}
-}
-
 func testAccSecurityProfile_basic(t *testing.T) {
 	var v connect.DescribeSecurityProfileOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -39,10 +22,10 @@ func testAccSecurityProfile_basic(t *testing.T) {
 	resourceName := "aws_connect_security_profile.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSecurityProfileDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSecurityProfileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSecurityProfileConfig_basic(rName, rName2, "Created"),
@@ -88,10 +71,10 @@ func testAccSecurityProfile_updatePermissions(t *testing.T) {
 	resourceName := "aws_connect_security_profile.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSecurityProfileDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSecurityProfileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSecurityProfileConfig_basic(rName, rName2, "TestPermissionsUpdate"),
@@ -140,10 +123,10 @@ func testAccSecurityProfile_updateTags(t *testing.T) {
 	resourceName := "aws_connect_security_profile.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSecurityProfileDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSecurityProfileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSecurityProfileConfig_basic(rName, rName2, description),
@@ -188,10 +171,10 @@ func testAccSecurityProfile_disappears(t *testing.T) {
 	resourceName := "aws_connect_security_profile.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckSecurityProfileDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckSecurityProfileDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSecurityProfileConfig_basic(rName, rName2, "Disappear"),

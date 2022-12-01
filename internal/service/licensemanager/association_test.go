@@ -20,10 +20,10 @@ func TestAccLicenseManagerAssociation_basic(t *testing.T) {
 	resourceName := "aws_licensemanager_association.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckAssociationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckAssociationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAssociationConfig_basic(rName),
@@ -47,10 +47,10 @@ func TestAccLicenseManagerAssociation_disappears(t *testing.T) {
 	resourceName := "aws_licensemanager_association.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckAssociationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckAssociationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccAssociationConfig_basic(rName),
@@ -83,13 +83,7 @@ func testAccCheckAssociationExists(n string) resource.TestCheckFunc {
 
 		conn := acctest.Provider.Meta().(*conns.AWSClient).LicenseManagerConn
 
-		err = tflicensemanager.FindAssociation(context.TODO(), conn, resourceARN, licenseConfigurationARN)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
+		return tflicensemanager.FindAssociation(context.Background(), conn, resourceARN, licenseConfigurationARN)
 	}
 }
 
@@ -107,7 +101,7 @@ func testAccCheckAssociationDestroy(s *terraform.State) error {
 			return err
 		}
 
-		err = tflicensemanager.FindAssociation(context.TODO(), conn, resourceARN, licenseConfigurationARN)
+		err = tflicensemanager.FindAssociation(context.Background(), conn, resourceARN, licenseConfigurationARN)
 
 		if tfresource.NotFound(err) {
 			continue

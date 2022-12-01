@@ -15,23 +15,6 @@ import (
 	tfconnect "github.com/hashicorp/terraform-provider-aws/internal/service/connect"
 )
 
-//Serialized acceptance tests due to Connect account limits (max 2 parallel tests)
-func TestAccConnectUserHierarchyGroup_serial(t *testing.T) {
-	testCases := map[string]func(t *testing.T){
-		"basic":            testAccUserHierarchyGroup_basic,
-		"disappears":       testAccUserHierarchyGroup_disappears,
-		"setParentGroupID": testAccUserHierarchyGroup_parentGroupId,
-		"updateTags":       testAccUserHierarchyGroup_updateTags,
-	}
-
-	for name, tc := range testCases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			tc(t)
-		})
-	}
-}
-
 func testAccUserHierarchyGroup_basic(t *testing.T) {
 	var v connect.DescribeUserHierarchyGroupOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -40,10 +23,10 @@ func testAccUserHierarchyGroup_basic(t *testing.T) {
 	resourceName := "aws_connect_user_hierarchy_group.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckUserHierarchyGroupDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckUserHierarchyGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserHierarchyGroupConfig_basic(rName, rName2),
@@ -97,10 +80,10 @@ func testAccUserHierarchyGroup_parentGroupId(t *testing.T) {
 	resourceName := "aws_connect_user_hierarchy_group.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckUserHierarchyGroupDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckUserHierarchyGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserHierarchyGroupConfig_parentID(rName, rName2, rName3),
@@ -134,10 +117,10 @@ func testAccUserHierarchyGroup_updateTags(t *testing.T) {
 	resourceName := "aws_connect_user_hierarchy_group.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckUserHierarchyGroupDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckUserHierarchyGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserHierarchyGroupConfig_basic(rName, rName2),
@@ -182,10 +165,10 @@ func testAccUserHierarchyGroup_disappears(t *testing.T) {
 	resourceName := "aws_connect_user_hierarchy_group.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckUserHierarchyGroupDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckUserHierarchyGroupDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccUserHierarchyGroupConfig_basic(rName, rName2),

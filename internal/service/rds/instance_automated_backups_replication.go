@@ -1,6 +1,7 @@
 package rds
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"time"
@@ -118,6 +119,7 @@ func resourceInstanceAutomatedBackupsReplicationRead(d *schema.ResourceData, met
 }
 
 func resourceInstanceAutomatedBackupsReplicationDelete(d *schema.ResourceData, meta interface{}) error {
+	ctx := context.TODO()
 	conn := meta.(*conns.AWSClient).RDSConn
 
 	backup, err := FindDBInstanceAutomatedBackupByARN(conn, d.Id())
@@ -143,7 +145,7 @@ func resourceInstanceAutomatedBackupsReplicationDelete(d *schema.ResourceData, m
 	})
 
 	if err != nil {
-		return fmt.Errorf("error stopping RDS instance automated backups replication (%s): %w", d.Id(), err)
+		return fmt.Errorf("stopping RDS instance automated backups replication (%s): %w", d.Id(), err)
 	}
 
 	// Create a new client to the source region.
@@ -152,7 +154,7 @@ func resourceInstanceAutomatedBackupsReplicationDelete(d *schema.ResourceData, m
 		sourceDatabaseConn = rds.New(meta.(*conns.AWSClient).Session, aws.NewConfig().WithRegion(sourceDatabaseARN.Region))
 	}
 
-	if _, err := waitDBInstanceAutomatedBackupDeleted(sourceDatabaseConn, dbInstanceID, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
+	if _, err := waitDBInstanceAutomatedBackupDeleted(ctx, sourceDatabaseConn, dbInstanceID, d.Id(), d.Timeout(schema.TimeoutCreate)); err != nil {
 		return fmt.Errorf("error waiting for DB instance automated backup (%s) delete: %w", d.Id(), err)
 	}
 

@@ -32,10 +32,10 @@ func TestAccLicenseManagerLicenseConfiguration_basic(t *testing.T) {
 	resourceName := "aws_licensemanager_license_configuration.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseConfigurationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseConfigurationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicenseConfigurationConfig_basic(rName),
@@ -67,10 +67,10 @@ func TestAccLicenseManagerLicenseConfiguration_disappears(t *testing.T) {
 	resourceName := "aws_licensemanager_license_configuration.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseConfigurationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseConfigurationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicenseConfigurationConfig_basic(rName),
@@ -90,10 +90,10 @@ func TestAccLicenseManagerLicenseConfiguration_tags(t *testing.T) {
 	resourceName := "aws_licensemanager_license_configuration.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseConfigurationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseConfigurationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicenseConfigurationConfig_tags1(rName, "key1", "value1"),
@@ -136,10 +136,10 @@ func TestAccLicenseManagerLicenseConfiguration_update(t *testing.T) {
 	resourceName := "aws_licensemanager_license_configuration.test"
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, licensemanager.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckLicenseConfigurationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, licensemanager.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckLicenseConfigurationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccLicenseConfigurationConfig_allAttributes(rName1),
@@ -195,7 +195,7 @@ func testAccCheckLicenseConfigurationExists(n string, v *licensemanager.GetLicen
 
 		conn := acctest.Provider.Meta().(*conns.AWSClient).LicenseManagerConn
 
-		output, err := tflicensemanager.FindLicenseConfigurationByARN(context.TODO(), conn, rs.Primary.ID)
+		output, err := tflicensemanager.FindLicenseConfigurationByARN(context.Background(), conn, rs.Primary.ID)
 
 		if err != nil {
 			return err
@@ -215,7 +215,7 @@ func testAccCheckLicenseConfigurationDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := tflicensemanager.FindLicenseConfigurationByARN(context.TODO(), conn, rs.Primary.ID)
+		_, err := tflicensemanager.FindLicenseConfigurationByARN(context.Background(), conn, rs.Primary.ID)
 
 		if tfresource.NotFound(err) {
 			continue
@@ -229,7 +229,6 @@ func testAccCheckLicenseConfigurationDestroy(s *terraform.State) error {
 	}
 
 	return nil
-
 }
 
 func testAccLicenseConfigurationConfig_basic(rName string) string {

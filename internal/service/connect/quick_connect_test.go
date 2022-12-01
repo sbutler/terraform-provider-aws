@@ -15,22 +15,6 @@ import (
 	tfconnect "github.com/hashicorp/terraform-provider-aws/internal/service/connect"
 )
 
-//Serialized acceptance tests due to Connect account limits (max 2 parallel tests)
-func TestAccConnectQuickConnect_serial(t *testing.T) {
-	testCases := map[string]func(t *testing.T){
-		"basic":      testAccQuickConnect_phoneNumber,
-		"disappears": testAccQuickConnect_disappears,
-		"updateTags": testAccQuickConnect_updateTags,
-	}
-
-	for name, tc := range testCases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			tc(t)
-		})
-	}
-}
-
 func testAccQuickConnect_phoneNumber(t *testing.T) {
 	var v connect.DescribeQuickConnectOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -38,10 +22,10 @@ func testAccQuickConnect_phoneNumber(t *testing.T) {
 	resourceName := "aws_connect_quick_connect.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckQuickConnectDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckQuickConnectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccQuickConnectConfig_phoneNumber(rName, rName2, "Created", "+12345678912"),
@@ -120,10 +104,10 @@ func testAccQuickConnect_updateTags(t *testing.T) {
 	resourceName := "aws_connect_quick_connect.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckQuickConnectDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckQuickConnectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccQuickConnectConfig_phoneNumber(rName, rName2, description, phone_number),
@@ -168,10 +152,10 @@ func testAccQuickConnect_disappears(t *testing.T) {
 	resourceName := "aws_connect_quick_connect.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckQuickConnectDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckQuickConnectDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccQuickConnectConfig_phoneNumber(rName, rName2, "Disappear", "+12345678912"),

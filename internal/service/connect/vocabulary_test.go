@@ -15,23 +15,10 @@ import (
 	tfconnect "github.com/hashicorp/terraform-provider-aws/internal/service/connect"
 )
 
-//Serialized acceptance tests due to Connect account limits (max 2 parallel tests)
-func TestAccConnectVocabulary_serial(t *testing.T) {
-	testCases := map[string]func(t *testing.T){
-		"basic":       testAccVocabulary_basic,
-		"disappears":  testAccVocabulary_disappears,
-		"update_tags": testAccVocabulary_updateTags,
-	}
-
-	for name, tc := range testCases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			tc(t)
-		})
-	}
-}
-
 func testAccVocabulary_basic(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping long-running test in short mode")
+	}
 	var v connect.DescribeVocabularyOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
 	rName2 := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -42,10 +29,10 @@ func testAccVocabulary_basic(t *testing.T) {
 	resourceName := "aws_connect_vocabulary.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basic(rName, rName2, content, languageCode),
@@ -73,6 +60,9 @@ func testAccVocabulary_basic(t *testing.T) {
 }
 
 func testAccVocabulary_disappears(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping long-running test in short mode")
+	}
 	var v connect.DescribeVocabularyOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
 	rName2 := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -83,10 +73,10 @@ func testAccVocabulary_disappears(t *testing.T) {
 	resourceName := "aws_connect_vocabulary.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basic(rName, rName2, content, languageCode),
@@ -101,6 +91,9 @@ func testAccVocabulary_disappears(t *testing.T) {
 }
 
 func testAccVocabulary_updateTags(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping long-running test in short mode")
+	}
 	var v connect.DescribeVocabularyOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
 	rName2 := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -111,10 +104,10 @@ func testAccVocabulary_updateTags(t *testing.T) {
 	resourceName := "aws_connect_vocabulary.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basic(rName, rName2, content, languageCode),

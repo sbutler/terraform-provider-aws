@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/hashicorp/terraform-provider-aws/internal/acctest"
 	"github.com/hashicorp/terraform-provider-aws/internal/conns"
+	"github.com/hashicorp/terraform-provider-aws/internal/create"
 	tftranscribe "github.com/hashicorp/terraform-provider-aws/internal/service/transcribe"
 	"github.com/hashicorp/terraform-provider-aws/internal/tfresource"
 	"github.com/hashicorp/terraform-provider-aws/names"
@@ -32,9 +33,9 @@ func TestAccTranscribeVocabulary_basic(t *testing.T) {
 			acctest.PreCheckPartitionHasService(names.TranscribeEndpointID, t)
 			testAccVocabulariesPreCheck(t)
 		},
-		ErrorCheck:        acctest.ErrorCheck(t, names.TranscribeEndpointID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t, names.TranscribeEndpointID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basicFile(rName),
@@ -70,9 +71,9 @@ func TestAccTranscribeVocabulary_basicPhrases(t *testing.T) {
 			acctest.PreCheckPartitionHasService(names.TranscribeEndpointID, t)
 			testAccVocabulariesPreCheck(t)
 		},
-		ErrorCheck:        acctest.ErrorCheck(t, names.TranscribeEndpointID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t, names.TranscribeEndpointID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basicPhrases(rName),
@@ -104,9 +105,9 @@ func TestAccTranscribeVocabulary_updateS3URI(t *testing.T) {
 			acctest.PreCheckPartitionHasService(names.TranscribeEndpointID, t)
 			testAccVocabulariesPreCheck(t)
 		},
-		ErrorCheck:        acctest.ErrorCheck(t, names.TranscribeEndpointID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t, names.TranscribeEndpointID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_updateFile(rName, file1),
@@ -143,9 +144,9 @@ func TestAccTranscribeVocabulary_updateTags(t *testing.T) {
 			acctest.PreCheckPartitionHasService(names.TranscribeEndpointID, t)
 			testAccVocabulariesPreCheck(t)
 		},
-		ErrorCheck:        acctest.ErrorCheck(t, names.TranscribeEndpointID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t, names.TranscribeEndpointID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_tags1(rName, "key1", "value1"),
@@ -191,9 +192,9 @@ func TestAccTranscribeVocabulary_disappears(t *testing.T) {
 			acctest.PreCheckPartitionHasService(names.TranscribeEndpointID, t)
 			testAccVocabulariesPreCheck(t)
 		},
-		ErrorCheck:        acctest.ErrorCheck(t, names.TranscribeEndpointID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckVocabularyDestroy,
+		ErrorCheck:               acctest.ErrorCheck(t, names.TranscribeEndpointID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckVocabularyDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccVocabularyConfig_basicFile(rName),
@@ -208,7 +209,7 @@ func TestAccTranscribeVocabulary_disappears(t *testing.T) {
 }
 
 func testAccCheckVocabularyDestroy(s *terraform.State) error {
-	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "aws_transcribe_vocabulary" {
@@ -225,7 +226,7 @@ func testAccCheckVocabularyDestroy(s *terraform.State) error {
 			return err
 		}
 
-		return names.Error(names.Transcribe, names.ErrActionCheckingDestroyed, tftranscribe.ResNameVocabulary, rs.Primary.ID, errors.New("not destroyed"))
+		return create.Error(names.Transcribe, create.ErrActionCheckingDestroyed, tftranscribe.ResNameVocabulary, rs.Primary.ID, errors.New("not destroyed"))
 	}
 
 	return nil
@@ -235,18 +236,18 @@ func testAccCheckVocabularyExists(name string, vocabulary *transcribe.GetVocabul
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, name, errors.New("not found"))
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, name, errors.New("not found"))
 		}
 
 		if rs.Primary.ID == "" {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, name, errors.New("not set"))
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, name, errors.New("not set"))
 		}
 
-		conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+		conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 		resp, err := tftranscribe.FindVocabularyByName(context.Background(), conn, rs.Primary.ID)
 
 		if err != nil {
-			return names.Error(names.Transcribe, names.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, rs.Primary.ID, err)
+			return create.Error(names.Transcribe, create.ErrActionCheckingExistence, tftranscribe.ResNameVocabulary, rs.Primary.ID, err)
 		}
 
 		*vocabulary = *resp
@@ -256,7 +257,7 @@ func testAccCheckVocabularyExists(name string, vocabulary *transcribe.GetVocabul
 }
 
 func testAccVocabulariesPreCheck(t *testing.T) {
-	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeConn
+	conn := acctest.Provider.Meta().(*conns.AWSClient).TranscribeClient
 
 	input := &transcribe.ListVocabulariesInput{}
 

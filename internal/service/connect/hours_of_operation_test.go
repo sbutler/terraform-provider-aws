@@ -15,23 +15,6 @@ import (
 	tfconnect "github.com/hashicorp/terraform-provider-aws/internal/service/connect"
 )
 
-//Serialized acceptance tests due to Connect account limits (max 2 parallel tests)
-func TestAccConnectHoursOfOperation_serial(t *testing.T) {
-	testCases := map[string]func(t *testing.T){
-		"basic":        testAccHoursOfOperation_basic,
-		"disappears":   testAccHoursOfOperation_disappears,
-		"updateConfig": testAccHoursOfOperation_updateConfig,
-		"updateTags":   testAccHoursOfOperation_updateTags,
-	}
-
-	for name, tc := range testCases {
-		tc := tc
-		t.Run(name, func(t *testing.T) {
-			tc(t)
-		})
-	}
-}
-
 func testAccHoursOfOperation_basic(t *testing.T) {
 	var v connect.DescribeHoursOfOperationOutput
 	rName := sdkacctest.RandomWithPrefix("resource-test-terraform")
@@ -42,10 +25,10 @@ func testAccHoursOfOperation_basic(t *testing.T) {
 	resourceName := "aws_connect_hours_of_operation.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckHoursOfOperationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckHoursOfOperationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccHoursOfOperationConfig_basic(rName, rName2, originalDescription),
@@ -115,10 +98,10 @@ func testAccHoursOfOperation_updateConfig(t *testing.T) {
 	resourceName := "aws_connect_hours_of_operation.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckHoursOfOperationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckHoursOfOperationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccHoursOfOperationConfig_basic(rName, rName2, description),
@@ -179,10 +162,10 @@ func testAccHoursOfOperation_updateTags(t *testing.T) {
 	resourceName := "aws_connect_hours_of_operation.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckHoursOfOperationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckHoursOfOperationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccHoursOfOperationConfig_basic(rName, rName2, description),
@@ -227,10 +210,10 @@ func testAccHoursOfOperation_disappears(t *testing.T) {
 	resourceName := "aws_connect_hours_of_operation.test"
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acctest.PreCheck(t) },
-		ErrorCheck:        acctest.ErrorCheck(t, connect.EndpointsID),
-		ProviderFactories: acctest.ProviderFactories,
-		CheckDestroy:      testAccCheckHoursOfOperationDestroy,
+		PreCheck:                 func() { acctest.PreCheck(t) },
+		ErrorCheck:               acctest.ErrorCheck(t, connect.EndpointsID),
+		ProtoV5ProviderFactories: acctest.ProtoV5ProviderFactories,
+		CheckDestroy:             testAccCheckHoursOfOperationDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccHoursOfOperationConfig_basic(rName, rName2, "Disappear"),
