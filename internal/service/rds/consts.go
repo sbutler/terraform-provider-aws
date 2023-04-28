@@ -1,6 +1,8 @@
 package rds
 
-import "time"
+import (
+	"time"
+)
 
 const (
 	ClusterRoleStatusActive  = "ACTIVE"
@@ -62,6 +64,7 @@ const (
 	InstanceStatusConfiguringLogExports                        = "configuring-log-exports"
 	InstanceStatusConvertingToVPC                              = "converting-to-vpc"
 	InstanceStatusCreating                                     = "creating"
+	InstanceStatusDeletePreCheck                               = "delete-precheck"
 	InstanceStatusDeleting                                     = "deleting"
 	InstanceStatusFailed                                       = "failed"
 	InstanceStatusInaccessibleEncryptionCredentials            = "inaccessible-encryption-credentials"
@@ -97,6 +100,11 @@ const (
 	EventSubscriptionStatusCreating  = "creating"
 	EventSubscriptionStatusDeleting  = "deleting"
 	EventSubscriptionStatusModifying = "modifying"
+)
+
+const (
+	DBSnapshotAvailable = "available"
+	DBSnapshotCreating  = "creating"
 )
 
 const (
