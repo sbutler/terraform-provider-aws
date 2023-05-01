@@ -294,7 +294,7 @@ func resourceStackSetInstanceRead(ctx context.Context, d *schema.ResourceData, m
 			d.SetId(StackSetInstanceCreateResourceID(stackSetName, accountID, region))
 		}
 
-		summaries, err := FindStackInstanceSummariesByOrgIDs(conn, stackSetName, region, callAs, orgIDs)
+		summaries, err := FindStackInstanceSummariesByOrgIDs(ctx, conn, stackSetName, region, callAs, orgIDs)
 
 		if err != nil {
 			return sdkdiag.AppendErrorf(diags, "finding CloudFormation StackSet Instance (%s) Account: %s", d.Id(), err)
@@ -339,7 +339,7 @@ func resourceStackSetInstanceRead(ctx context.Context, d *schema.ResourceData, m
 
 		d.Set("stack_id", stackInstance.StackId)
 	} else {
-		return sdkdiag.AppendErrorf(diag, "reading CloudFormation StackSet Instance (%s): no account_id or deployment_targets", d.Id())
+		return sdkdiag.AppendErrorf(diags, "reading CloudFormation StackSet Instance (%s): no account_id or deployment_targets", d.Id())
 	}
 
 	return diags
